@@ -1,0 +1,49 @@
+FROM container4armhf/armhf-alpine:latest
+
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
+RUN apk add --update --no-cache nodejs openssl gettext && \
+  apk add --no-cache --virtual build-deps python make gcc g++ && \
+  npm config set strict-ssl false && \
+  npm install -g Haraka && \
+  apk del build-deps && \
+  mkdir -p /opt/haraka
+
+WORKDIR /opt/haraka
+
+ENV DOMAIN\
+  MDA_HOST\
+  MDA_PORT
+
+RUN haraka --install . \
+  && openssl req -x509 -nodes -days 2190 -newkey rsa:2048 \
+      -keyout config/tls_key.pem -out config/tls_cert.pem \
+      -subj "/C=AA/ST=A/L=A/O=A/OU=A/CN=A" \
+  && echo -e \$DOMAIN > config/host_list.temp \
+  && echo -e "\
+[\$DOMAIN]\n\
+host=\$MDA_HOST\n\
+port=\$MDA_PORT" > config/lmtp.ini.temp \
+  && echo -e "\
+ciphers=EECDH+AESGCM:EDH+aRSA+AESGCM:EECDH+AES256:EDH+aRSA+AES256:EECDH+AES128:EDH+aRSA+AES128:RSA+AES:RSA+3DES\n\
+rejectUnauthorized=true\n\
+requestCert=true\n\
+" > config/tls.ini \
+  && echo -e "\
+tls\n\
+access\n\
+helo.checks\n\
+mail_from.is_resolvable\n\
+rcpt_to.in_host_list\n\
+data.headers\n\
+queue/lmtp\n\
+max_unrecognized_commands" > config/plugins \
+  && echo -e "LOGNOTICE" > config/loglevel
+
+
+EXPOSE 25
+
+CMD envsubst < /opt/haraka/config/host_list.temp > /opt/haraka/config/host_list \
+  && envsubst < /opt/haraka/config/lmtp.ini.temp > /opt/haraka/config/lmtp.ini  \
+  && /usr/bin/haraka -c /opt/haraka/
+

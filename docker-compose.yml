@@ -1,0 +1,72 @@
+version: '2'
+services:
+  haraka:
+    build:
+      context: .
+      dockerfile: Dockerfile.haraka
+    image: haraka
+    env_file: .env
+    environment:
+     - MDA_HOST=dovecot
+     - MDA_PORT=24
+    ports:
+     - "25:25"
+  dovecot:
+    build:
+      context: .
+      dockerfile: Dockerfile.dovecot
+    image: dovecot
+    env_file: .env
+    ports:
+     - "143:143"
+    volumes:
+     - $LOCAL_FOLDER/dovecot-data:/mail/
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    image: nginx
+    env_file: .env
+    environment:
+     - PHP_HOST=php
+     - PHP_PORT=9000
+    ports:
+      - "8090:80"
+    depends_on:
+      - php
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile.php
+    image: php
+    env_file: .env
+    environment:
+     - MDA_HOST=dovecot
+     - MDA_PORT=143
+     - DB_TYPE=pgsql
+     - DB_HOST=postgresql
+     - DB_PORT=5432
+     - DB_NAME=rainloop
+     - DB_USER=root
+     - DB_PASSWORD=root
+    volumes:
+      - $LOCAL_FOLDER/webmail-data:/var/www/html/data
+  postgresql:
+    build:
+      context: .
+      dockerfile: Dockerfile.pgsql
+    image: pgsql
+    environment:
+     - DB_NAME=rainloop
+     - DB_USER=root
+     - DB_PASSWORD=root
+    volumes: 
+     - $LOCAL_FOLDER/postgresql-data:/var/lib/postgresql/data
+  fetchmail:
+    build:
+      context: .
+      dockerfile: Dockerfile.fetchmail
+    image: fetchmail
+    env_file: .env
+    volumes:
+     - $LOCAL_FOLDER/fetchmail-data:/etc/fetchmail

@@ -1,0 +1,7 @@
+FROM container4armhf/armhf-alpine:latest
+
+RUN apk add --update --no-cache fetchmail ca-certificates
+
+VOLUME ["/etc/fetchmail/"]
+
+CMD ["fetchmail","-f","/etc/fetchmail/fetchmailrc","-N","-d", "600","-S","dovecot/24","--lmtp"]

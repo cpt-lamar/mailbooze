@@ -1,0 +1,63 @@
+FROM container4armhf/armhf-alpine
+
+WORKDIR /var/www/html
+
+RUN set -x \
+  && apk add --no-cache nginx gettext unzip curl \
+  && curl http://www.rainloop.net/repository/webmail/rainloop-community-latest.zip -o rainloop.zip \
+  && unzip rainloop.zip \
+  && rm rainloop.zip \
+  && rm -r data/ \
+  && find . -regex '.*\.php' | grep -v index.php | xargs rm  \
+  && adduser -u 82 -D -S -G www-data www-data \
+  && find . -type d -exec chmod 755 {} \; \
+  && find . -type f -exec chmod 644 {} \; \
+  && chown -R www-data:www-data .
+
+ENV NGINX_PROCS\
+  NGINX_CONN\
+  PHP_HOST\
+  PHP_PORT
+
+#nginx configuration 
+RUN echo -e "\ 
+daemon off;\n\
+worker_processes \$NGINX_PROCS;\n\ 
+error_log stderr;\n\ 
+pid /var/run/nginx.pid;\n\
+\n\ 
+events {\n\
+    worker_connections \$NGINX_CONN;\n\
+}\n\
+\n\
+http {\n\ 
+    access_log /dev/stdout;\n\ 
+    include mime.types;\n\ 
+    server {\n\ 
+        listen 80;\n\ 
+        root /var/www/html/;\n\ 
+        index index.php;\n\
+        location ~ [^/]\.php(/|$) {\n\ 
+          fastcgi_split_path_info ^(.+?\.php)(/.*)$;\n\ 
+          if (!-f \$document_root\$fastcgi_script_name) {\n\ 
+            return 404;\n\ 
+          }\n\
+          fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;\n\ 
+          fastcgi_pass \$PHP_HOST:\$PHP_PORT;\n\ 
+          fastcgi_index index.php;\n\ 
+          include fastcgi_params;\n\ 
+        }\n\
+        location ^~ /data {\n\
+          deny all;\n\
+        }\n\
+    }\n\ 
+}\ 
+" > /etc/nginx/nginx.conf.temp 
+
+CMD envsubst '$NGINX_PROCS $NGINX_CONN $PHP_HOST $PHP_PORT'\
+      < /etc/nginx/nginx.conf.temp > /etc/nginx/nginx.conf\
+      && cat /etc/nginx/nginx.conf \
+      && nginx
+
+
+EXPOSE 80

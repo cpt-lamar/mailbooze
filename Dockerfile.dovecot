@@ -1,0 +1,36 @@
+FROM container4armhf/armhf-alpine:latest
+
+RUN apk add --update --no-cache dovecot && \
+  mkdir /mail && \
+  adduser -D -G users vmail && \
+  chown vmail:users /mail
+
+VOLUME ["/mail"]
+
+RUN echo -e "\
+log_path=/dev/stderr\n\
+protocols = imap pop3 lmtp\n\
+ssl = no\n\
+disable_plaintext_auth = no\n\
+mail_debug = no\n\
+maildir_very_dirty_syncs = yes\n\
+mail_location = maildir:/mail/%u\n\
+passdb {\n\
+  args = scheme=CRYPT username_format=%u /mail/users\n\
+  driver = passwd-file\n\
+}\n\
+userdb {\n\
+  args = username_format=%u /mail/users\n\
+  driver = passwd-file\n\
+}\n\
+service lmtp {\n\
+  inet_listener lmtp {\n\
+    address = * ::\n\
+    port =24\n\
+  }\n\
+}\
+" > /etc/dovecot/dovecot.conf
+
+EXPOSE 24 143
+
+CMD ["dovecot","-F"]
