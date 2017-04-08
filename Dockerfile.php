@@ -3,6 +3,7 @@ FROM container4armhf/armhf-alpine
 WORKDIR /var/www/html
 
 RUN set -x \
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community/" >> /etc/apk/repositories \
   && apk update \
   && apk add --no-cache unzip curl php5 php5-fpm php5-curl php5-iconv php5-json php5-xml php5-dom php5-openssl php5-zlib php5-opcache php5-gd php5-pdo_pgsql msmtp gettext su-exec \
   && addgroup -g 82 -S www-data \
