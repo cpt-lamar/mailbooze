@@ -5,7 +5,7 @@ WORKDIR /var/www/html
 RUN set -x \
   && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community/" >> /etc/apk/repositories \
   && apk update \
-  && apk add --no-cache unzip curl php5 php5-fpm php5-curl php5-iconv php5-json php5-xml php5-dom php5-openssl php5-zlib php5-opcache php5-gd php5-pdo_pgsql msmtp gettext su-exec \
+  && apk add --no-cache unzip curl php7 php7-fpm php7-curl php7-iconv php7-json php7-xml php7-dom php7-openssl php7-zlib php7-opcache php7-gd php7-pdo_pgsql msmtp gettext su-exec \
   && addgroup -g 82 -S www-data \
   && adduser -u 82 -D -S -G www-data www-data \
   && curl http://www.rainloop.net/repository/webmail/rainloop-community-latest.zip -o rainloop.zip \
@@ -50,9 +50,9 @@ user = www-data\n\
 access.log = /proc/self/fd/2\n\
 clear_env = no\n\
 catch_workers_output = yes\n\
-listen = [::]:9000\n" > /etc/php5/php-fpm.conf.temp
+listen = [::]:9000\n" > /etc/php7/php-fpm.conf.temp
 
-RUN echo -e "sendmail_path = msmtp --read-envelope-from -t" >> /etc/php5/php.ini
+RUN echo -e "sendmail_path = msmtp --read-envelope-from -t" >> /etc/php7/php.ini
 
 #msmtp (sendmail) configuration
 RUN echo -e "\
@@ -70,10 +70,10 @@ password \$MSA_PASSWORD \n\
 
 VOLUME /var/www/html/data
 
-CMD  envsubst < /etc/php5/php-fpm.conf.temp > /etc/php5/php-fpm.conf \
+CMD  envsubst < /etc/php7/php-fpm.conf.temp > /etc/php7/php-fpm.conf \
   && envsubst < /etc/msmtprc.temp > /etc/msmtprc \
   && chown www-data:www-data data \
-  && su-exec www-data php index.php \
+  && su-exec www-data php7 index.php \
   && su-exec www-data echo -e "imap_host = \"$MDA_HOST\"\nimap_port = $MDA_PORT\nsmtp_php_mail = On" > data/_data_/_default_/domains/$DOMAIN.ini \
   && su-exec www-data sed -i -e "/^\[contacts\]/,/^\[.*\]/ s|^enable.*$|enable = On|" \
             -e "/^\[debug\]/,/^\[.*\]/ s|^enable *=.*$|enable = Off|" \
@@ -83,6 +83,6 @@ CMD  envsubst < /etc/php5/php-fpm.conf.temp > /etc/php5/php-fpm.conf \
             -e "s/^pdo_user.*$/pdo_user = $DB_USER/" \
             -e "s/^pdo_password.*$/pdo_password = $DB_PASSWORD/" \
             data/_data_/_default_/configs/application.ini \
-  && php-fpm
+  && php-fpm7
 
 EXPOSE 9000
