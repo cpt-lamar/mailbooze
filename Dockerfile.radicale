@@ -1,0 +1,39 @@
+FROM container4armhf/armhf-alpine
+
+RUN set -x \
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community/" >> /etc/apk/repositories \
+  && apk update \
+  && apk add --no-cache python3 \
+  && pip3 install radicale \
+  && mkdir -p /var/lib/radicale/
+
+ENV IMAP_HOST\
+  IMAP_PORT\
+  IMAP_SSL
+
+#radicale configuration
+RUN echo -e "\
+[server]\n\
+hosts = 0.0.0.0:80\n\
+\n\
+[auth]\n\
+type = htpasswd\n\
+imap_hostname = \$IMAP_HOST\n\
+imap_port = \$IMAP_PORT\n\
+imap_ssl = \$IMAP_SSL\n\
+\n\
+[rights]\n\
+type = owner_only\n\
+[storage]\n\
+filesystem_folder = /var/lib/radicale\n\
+\n\
+[logging]\n\
+debug=true\n\
+" > /etc/radicale.conf.temp
+
+VOLUME /var/lib/radicale
+
+EXPOSE 80
+
+CMD  envsubst < /etc/radicale.conf.temp > /etc/php7/radicale.conf \
+  && radicale -f
