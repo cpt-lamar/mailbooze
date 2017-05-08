@@ -14,8 +14,6 @@ RUN set -x \
   && rm -r ./rainloop/v/*/static/ \
   && find . -type d -exec chmod 755 {} \; \
   && find . -type f -exec chmod 644 {} \; \
-  && find . -path */MailSo/Base/Utils.php -exec \
-      sed -i 's/\$sFirst = \$sLine{1};/\$sFirst = \\substr(\$sLine,0,1);/' {} \; \
   && chown -R www-data:www-data .
 
 ENV PHP_PROCS\

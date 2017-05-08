@@ -7,7 +7,7 @@ RUN apk add --update --no-cache nodejs nodejs-npm openssl gettext && \
   npm config set strict-ssl false && \
   npm install -g Haraka && \
   apk del build-deps && \
-  mkdir -p /opt/haraka
+  mkdir -p /opt/haraka/queue
 
 WORKDIR /opt/haraka
 
