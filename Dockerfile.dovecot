@@ -1,9 +1,11 @@
-FROM container4armhf/armhf-alpine:latest
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
 
-RUN apk add --update --no-cache dovecot && \
-  mkdir /mail && \
-  adduser -D -G users vmail && \
-  chown vmail:users /mail
+RUN set -x \ 
+  && apk add --update --no-cache dovecot \
+  && mkdir /mail \
+  && adduser -D -G users vmail \
+  && chown vmail:users /mail
 
 VOLUME ["/mail"]
 

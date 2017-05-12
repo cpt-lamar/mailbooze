@@ -1,4 +1,5 @@
-FROM container4armhf/armhf-alpine:latest
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
 
 ENV LANG=en_US.utf8 \
     PGDATA="/var/lib/postgresql/data"

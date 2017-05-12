@@ -3,6 +3,8 @@ services:
   haraka:
     build:
       context: .
+      args:
+       - BASE_IMAGE
       dockerfile: Dockerfile.haraka
     image: haraka
     env_file: .env
@@ -14,6 +16,8 @@ services:
   dovecot:
     build:
       context: .
+      args:
+       - BASE_IMAGE
       dockerfile: Dockerfile.dovecot
     image: dovecot
     env_file: .env
@@ -24,10 +28,14 @@ services:
   nginx:
     build:
       context: .
+      args:
+       - BASE_IMAGE
       dockerfile: Dockerfile.nginx
     image: nginx
     env_file: .env
     environment:
+     - NGINX_PROCS=2
+     - NGINX_CONN=100
      - PHP_HOST=php
      - PHP_PORT=9000
     ports:
@@ -37,10 +45,13 @@ services:
   php:
     build:
       context: .
+      args:
+       - BASE_IMAGE
       dockerfile: Dockerfile.php
     image: php
     env_file: .env
     environment:
+     - PHP_PROCS=2
      - MDA_HOST=dovecot
      - MDA_PORT=143
      - DB_TYPE=pgsql
@@ -54,8 +65,11 @@ services:
   postgresql:
     build:
       context: .
+      args:
+       - BASE_IMAGE
       dockerfile: Dockerfile.pgsql
     image: pgsql
+    env_file: .env
     environment:
      - DB_NAME=rainloop
      - DB_USER=root
@@ -65,6 +79,8 @@ services:
   fetchmail:
     build:
       context: .
+      args:
+       - BASE_IMAGE
       dockerfile: Dockerfile.fetchmail
     image: fetchmail
     env_file: .env

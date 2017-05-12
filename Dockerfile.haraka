@@ -1,8 +1,9 @@
-FROM container4armhf/armhf-alpine:latest
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
 
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
-RUN apk add --update --no-cache nodejs nodejs-npm openssl gettext && \
+RUN apk add --update --no-cache nodejs openssl gettext && \
   apk add --no-cache --virtual build-deps python make gcc g++ && \
   npm config set strict-ssl false && \
   npm install -g Haraka && \
