@@ -1,17 +1,23 @@
 FROM container4armhf/armhf-alpine:latest
 
-RUN apk add --update --no-cache dovecot && \
-  mkdir /mail && \
-  adduser -D -G users vmail && \
-  chown vmail:users /mail
+RUN mkdir /etc/dovecot/ \
+  && echo "ssl = no" > /etc/dovecot/dovecot.conf \
+  && apk add --update --no-cache dovecot \
+  && mkdir /mail \
+  && adduser -D -G users vmail \
+  && chown vmail:users /mail
 
 VOLUME ["/mail"]
 
 RUN echo -e "\
 log_path=/dev/stderr\n\
 protocols = imap pop3 lmtp\n\
-ssl = no\n\
-disable_plaintext_auth = no\n\
+ssl = required\n\
+ssl_cert = </etc/ssl/certs/dovecot.pem\n\
+ssl_key = </etc/ssl/certs/dovecot.key\n\
+disable_plaintext_auth=no\n\
+#login_trusted_networks\n\
+auth_mechanisms = plain login cram-md5\n\
 mail_debug = no\n\
 maildir_very_dirty_syncs = yes\n\
 mail_location = maildir:/mail/%u\n\
@@ -33,4 +39,7 @@ service lmtp {\n\
 
 EXPOSE 24 143
 
-CMD ["dovecot","-F"]
+CMD openssl req -new -x509 -nodes -config /etc/dovecot/dovecot-openssl.cnf \
+     -out /etc/ssl/certs/dovecot.pem -keyout /etc/ssl/certs/dovecot.key -days 365 \
+    && chmod 0400 /etc/ssl/certs/dovecot.key \
+    && dovecot -F
