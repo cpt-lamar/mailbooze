@@ -43,6 +43,7 @@ services:
     environment:
      - MDA_HOST=dovecot
      - MDA_PORT=143
+     - MDA_SECURE=TLS
      - DB_TYPE=pgsql
      - DB_HOST=postgresql
      - DB_PORT=5432
@@ -70,3 +71,16 @@ services:
     env_file: .env
     volumes:
      - $LOCAL_FOLDER/fetchmail-data:/etc/fetchmail
+  radicale:
+    build:
+      context: .
+      dockerfile: Dockerfile.radicale
+    image: radicale
+    environment:
+     - IMAP_HOST=dovecot
+     - IMAP_PORT=143
+     - IMAP_SSL=False
+    ports:
+     - "8091:80"
+    volumes:
+     - $LOCAL_FOLDER/radicale-data:/var/lib/radicale
