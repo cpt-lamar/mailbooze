@@ -5,7 +5,7 @@ WORKDIR /var/www/html
 RUN set -x \
   && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community/" >> /etc/apk/repositories \
   && apk update \
-  && apk add --no-cache unzip curl php7 php7-fpm php7-curl php7-iconv php7-json php7-xml php7-dom php7-openssl php7-zlib php7-opcache php7-gd php7-pdo_pgsql msmtp gettext su-exec \
+  && apk add --no-cache unzip curl php7 php7-fpm php7-curl php7-iconv php7-json php7-xml php7-dom php7-openssl php7-zlib php7-opcache php7-gd php7-pdo_pgsql php7-simplexml msmtp gettext su-exec \
   && addgroup -g 82 -S www-data \
   && adduser -u 82 -D -S -G www-data www-data \
   && curl http://www.rainloop.net/repository/webmail/rainloop-community-latest.zip -o rainloop.zip \
@@ -20,6 +20,7 @@ ENV PHP_PROCS\
   DOMAIN\
   MDA_HOST\
   MDA_PORT\
+  MDA_SECURE\
   MSA_HOST\
   MSA_PORT\
   MSA_AUTH\
@@ -72,7 +73,7 @@ CMD  envsubst < /etc/php7/php-fpm.conf.temp > /etc/php7/php-fpm.conf \
   && envsubst < /etc/msmtprc.temp > /etc/msmtprc \
   && chown www-data:www-data data \
   && su-exec www-data php7 index.php \
-  && su-exec www-data echo -e "imap_host = \"$MDA_HOST\"\nimap_port = $MDA_PORT\nsmtp_php_mail = On" > data/_data_/_default_/domains/$DOMAIN.ini \
+  && su-exec www-data echo -e "imap_host = \"$MDA_HOST\"\nimap_port = $MDA_PORT\nimap_secure = \"$MDA_SECURE\"\nsmtp_php_mail = On" > data/_data_/_default_/domains/$DOMAIN.ini \
   && su-exec www-data sed -i -e "/^\[contacts\]/,/^\[.*\]/ s|^enable.*$|enable = On|" \
             -e "/^\[debug\]/,/^\[.*\]/ s|^enable *=.*$|enable = Off|" \
             -e "s/^mail_func_clear_headers.*/mail_func_clear_headers = On/" \
