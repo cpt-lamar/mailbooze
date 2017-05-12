@@ -23,7 +23,8 @@ RUN haraka --install . \
   && echo -e "\
 [\$DOMAIN]\n\
 host=\$MDA_HOST\n\
-port=\$MDA_PORT" > config/lmtp.ini.temp \
+port=\$MDA_PORT\n\
+enable_tls=true" > config/lmtp.ini.temp \
   && echo -e "\
 ciphers=EECDH+AESGCM:EDH+aRSA+AESGCM:EECDH+AES256:EDH+aRSA+AES256:EECDH+AES128:EDH+aRSA+AES128:RSA+AES:RSA+3DES\n\
 rejectUnauthorized=true\n\
