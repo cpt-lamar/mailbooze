@@ -1,4 +1,5 @@
-FROM container4armhf/armhf-alpine
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
 
 RUN set -x \
   && apk update \
@@ -27,7 +28,7 @@ type = owner_only\n\
 filesystem_folder = /var/lib/radicale\n\
 \n\
 [logging]\n\
-debug = True\n\
+debug = False\n\
 " > /etc/radicale.conf.temp
 
 VOLUME /var/lib/radicale

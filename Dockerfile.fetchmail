@@ -1,4 +1,5 @@
-FROM container4armhf/armhf-alpine:latest
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
 
 RUN apk add --update --no-cache fetchmail ca-certificates
 

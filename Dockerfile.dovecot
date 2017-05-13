@@ -1,4 +1,5 @@
-FROM container4armhf/armhf-alpine:latest
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
 
 RUN mkdir /etc/dovecot/ \
   && echo "ssl = no" > /etc/dovecot/dovecot.conf \
@@ -12,7 +13,7 @@ VOLUME ["/mail"]
 RUN echo -e "\
 log_path=/dev/stderr\n\
 protocols = imap pop3 lmtp\n\
-ssl = required\n\
+ssl = yes\n\
 ssl_cert = </etc/ssl/certs/dovecot.pem\n\
 ssl_key = </etc/ssl/certs/dovecot.key\n\
 disable_plaintext_auth=no\n\
