@@ -26,9 +26,6 @@ imap_ssl = \$IMAP_SSL\n\
 type = owner_only\n\
 [storage]\n\
 filesystem_folder = /var/lib/radicale\n\
-\n\
-[logging]\n\
-debug = False\n\
 " > /etc/radicale.conf.temp
 
 VOLUME /var/lib/radicale

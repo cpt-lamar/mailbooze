@@ -74,7 +74,7 @@ CMD  envsubst < /etc/php7/php-fpm.conf.temp > /etc/php7/php-fpm.conf \
   && envsubst < /etc/msmtprc.temp > /etc/msmtprc \
   && chown www-data:www-data data \
   && su-exec www-data php7 index.php \
-  && su-exec www-data echo -e "imap_host = \"$MDA_HOST\"\nimap_port = $MDA_PORT\nimap_secure = \"$MDA_SECURE\"\nsmtp_php_mail = On" > data/_data_/_default_/domains/$DOMAIN.ini \
+  && echo -e "imap_host = \"$MDA_HOST\"\nimap_port = $MDA_PORT\nimap_secure = \"$MDA_SECURE\"\nimap_short_login = On\nsmtp_php_mail = On" > data/_data_/_default_/domains/$DOMAIN.ini \
   && su-exec www-data sed -i -e "/^\[contacts\]/,/^\[.*\]/ s|^enable.*$|enable = On|" \
             -e "/^\[debug\]/,/^\[.*\]/ s|^enable *=.*$|enable = Off|" \
             -e "s/^mail_func_clear_headers.*/mail_func_clear_headers = On/" \
