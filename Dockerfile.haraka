@@ -25,8 +25,9 @@ RUN haraka --install . \
 [\$DOMAIN]\n\
 host=\$MDA_HOST\n\
 port=\$MDA_PORT\n\
-enable_tls=true" > config/lmtp.ini.temp \
+enable_tls=false" > config/lmtp.ini.temp \
   && echo -e "\
+[inbound]\n\
 ciphers=EECDH+AESGCM:EDH+aRSA+AESGCM:EECDH+AES256:EDH+aRSA+AES256:EECDH+AES128:EDH+aRSA+AES128:RSA+AES:RSA+3DES\n\
 rejectUnauthorized=true\n\
 requestCert=true\n\
@@ -42,6 +43,7 @@ queue/lmtp\n\
 max_unrecognized_commands" > config/plugins \
   && echo -e "LOGNOTICE" > config/loglevel
 
+VOLUME /opt/haraka
 
 EXPOSE 25
 

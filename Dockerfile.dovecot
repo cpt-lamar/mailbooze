@@ -16,18 +16,22 @@ ssl = yes\n\
 ssl_cert = </etc/ssl/certs/dovecot.pem\n\
 ssl_key = </etc/ssl/certs/dovecot.key\n\
 disable_plaintext_auth=no\n\
-#login_trusted_networks\n\
-auth_mechanisms = plain login cram-md5\n\
-mail_debug = no\n\
+auth_mechanisms = plain login\n\
+#mail_debug = yes\n\
+#auth_debug=yes\n\
+#verbose_ssl=yes\n\
 maildir_very_dirty_syncs = yes\n\
-mail_location = maildir:/mail/%u\n\
+mail_location = maildir:/mail/%n\n\
 passdb {\n\
-  args = scheme=CRYPT username_format=%u /mail/users\n\
+  args = scheme=CRYPT username_format=%n /mail/users\n\
   driver = passwd-file\n\
 }\n\
 userdb {\n\
-  args = username_format=%u /mail/users\n\
+  args = username_format=%n /mail/users\n\
   driver = passwd-file\n\
+}\n\
+protocol lmtp {\n\
+  ssl = no\n\
 }\n\
 service lmtp {\n\
   inet_listener lmtp {\n\
