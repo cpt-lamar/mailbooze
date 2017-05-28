@@ -13,6 +13,8 @@ services:
      - MDA_PORT=24
     ports:
      - "25:25"
+    volumes:
+     - $LOCAL_FOLDER/haraka-data:/opt/haraka/queue
   dovecot:
     build:
       context: .
