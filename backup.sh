@@ -36,7 +36,7 @@ SSH_CMD="ssh -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no"
 
 function transfer
 {
-  if [ "$1" != "" ]; then
+  if [ "$1" != "empty" ]; then
     SEND_CMD="sudo btrfs send -p $LOCAL_FOLDER/.snapshotz/$1 $LOCAL_FOLDER/.snapshotz/$2"
   else
     SEND_CMD="sudo btrfs send $LOCAL_FOLDER/.snapshotz/$2"
@@ -70,7 +70,7 @@ function transfer_snapshots
       transfer_snapshots $(( $1 + 1 ))
       BASE_SNAPSHOT=${LOCAL_LIST[$1 +1]}
     else
-      BASE_SNAPSHOT=""
+      BASE_SNAPSHOT="empty"
     fi
     #do the actual transfer here
     transfer "$BASE_SNAPSHOT" "${LOCAL_LIST[$1]}"
