@@ -100,3 +100,22 @@ NB_SNAPSHOTS=0
 transfer_snapshots 0
 
 echo "$NB_SNAPSHOTS snapshots successfully sent to $REMOTE_HOST"
+
+
+#Starting backup...
+echo "Cleaning $LOCAL_FOLDER/.snapshotz"
+SNAPSHOTS=$(sudo sh -c "ls -1d $LOCAL_FOLDER/.snapshotz/*")
+
+LAST_7_DAYS=($(for i in {1..7}; do date --date="$i days ago" -u +%Y-%m-%d; done ))
+
+#Keep 1 snapshot per day for last 7 days
+for DAY in ${LAST_7_DAYS[@]}; do
+  echo "$SNAPSHOTS" | grep "$DAY" | tail +2 | xargs -r -n 1 sudo btrfs sub del
+done
+
+#Keep 1 snapshot per month for last 2 months - but do not touch last 7 days
+EXCLUDE=$(printf ' -e %s' "${LAST_7_DAYS[@]}")
+for i in {1..2}; do
+  echo "$SNAPSHOTS" | grep "$(date --date="$i months ago" -u +%Y-%m)" | tail +2 | grep -v $EXCLUDE | xargs -r -n 1 sudo btrfs sub del
+done
+echo "Successully cleaned $LOCAL_FOLDER/.snapshotz"
