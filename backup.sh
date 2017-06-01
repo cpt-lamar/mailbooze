@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 
 usage ()
 {
@@ -49,7 +49,7 @@ function transfer
 
 function find_remote_snapshot
 {
-  for i in ${!REMOTE_LIST[*]}; do
+  for i in ${!REMOTE_LIST[@]}; do
     if [ "$1" == "${REMOTE_LIST[$i]}" ]; then
       echo $i
       return
@@ -66,7 +66,7 @@ function transfer_snapshots
     echo "found ${LOCAL_LIST[$1]} on remote server"
     return 0
   else
-    if [ ${#LOCAL_LIST[*]} -gt $1 ]; then #recurse !
+    if [ ${#LOCAL_LIST[@]} -gt $1 ]; then #recurse !
       transfer_snapshots $(( $1 + 1 ))
       BASE_SNAPSHOT=${LOCAL_LIST[$1 +1]}
     else
@@ -102,18 +102,20 @@ transfer_snapshots 0
 echo "$NB_SNAPSHOTS snapshots successfully sent to $REMOTE_HOST"
 
 
-#Starting backup...
+#Starting cleanup...
 echo "Cleaning $LOCAL_FOLDER/.snapshotz"
-SNAPSHOTS=$(sudo sh -c "ls -1d $LOCAL_FOLDER/.snapshotz/*")
-
-LAST_7_DAYS=($(for i in {1..7}; do date --date="$i days ago" -u +%Y-%m-%d; done ))
 
 #Keep 1 snapshot per day for last 7 days
+LAST_7_DAYS=($(for i in {1..7}; do date --date="$i days ago" -u +%Y-%m-%d; done ))
 for DAY in ${LAST_7_DAYS[@]}; do
-  echo "$SNAPSHOTS" | grep "$DAY" | tail +2 | xargs -r -n 1 sudo btrfs sub del
+  printf '%s\n' ${LOCAL_LIST[@]} | sort | grep "$DAY" | tail +2 | xargs -r -n 1 sh -c "sudo btrfs sub del $LOCAL_FOLDER/.snapshotz/\$0"
+  printf '%s\n' ${REMOTE_LIST[@]} | sort | grep "$DAY" | tail +2 | xargs -r -n 1 sh -c "$SSH_CMD $REMOTE_HOST sudo btrfs sub del $REMOTE_FOLDER/.snapshotz/\$0"
 done
 
 #Keep 1 snapshot per month for previous month - but do not touch last 7 days
+LASTMONTH=$(date --date="$(date +%Y-%m-15) - 1 month" -u +%Y-%m)
 EXCLUDE="-e $(date -u +%Y-%m-%d) $(printf ' -e %s' "${LAST_7_DAYS[@]}")"
-echo "$SNAPSHOTS" | grep "$(date --date="$(date +%Y-%m-15) - 1 month" -u +%Y-%m)" | tail +2 | grep -v $EXCLUDE | xargs -r -n 1 sudo btrfs sub del
+printf '%s\n' ${LOCAL_LIST[@]} | sort | grep "$LASTMONTH" | tail +2 | grep -v $EXCLUDE | xargs -r -n 1 sh -c "sudo btrfs sub del $LOCAL_FOLDER/.snapshotz/\$0"
+printf '%s\n' ${REMOTE_LIST[@]} | sort | grep "$LASTMONTH" | tail +2 | grep -v $EXCLUDE | xargs -r -n 1 sh -c "$SSH_CMD $REMOTE_HOST sudo btrfs sub del $REMOTE_FOLDER/.snapshotz/\$0"
+
 echo "Successully cleaned $LOCAL_FOLDER/.snapshotz"
