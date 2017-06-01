@@ -113,9 +113,7 @@ for DAY in ${LAST_7_DAYS[@]}; do
   echo "$SNAPSHOTS" | grep "$DAY" | tail +2 | xargs -r -n 1 sudo btrfs sub del
 done
 
-#Keep 1 snapshot per month for last 2 months - but do not touch last 7 days
-EXCLUDE=$(printf ' -e %s' "${LAST_7_DAYS[@]}")
-for i in {1..2}; do
-  echo "$SNAPSHOTS" | grep "$(date --date="$i months ago" -u +%Y-%m)" | tail +2 | grep -v $EXCLUDE | xargs -r -n 1 sudo btrfs sub del
-done
+#Keep 1 snapshot per month for previous month - but do not touch last 7 days
+EXCLUDE="-e $(date -u +%Y-%m-%d) $(printf ' -e %s' "${LAST_7_DAYS[@]}")"
+echo "$SNAPSHOTS" | grep "$(date --date="$(date +%Y-%m-15) - 1 month" -u +%Y-%m)" | tail +2 | grep -v $EXCLUDE | xargs -r -n 1 sudo btrfs sub del
 echo "Successully cleaned $LOCAL_FOLDER/.snapshotz"
