@@ -13,8 +13,8 @@ ENV  DB_NAME\
 
 VOLUME $PGDATA
 
-RUN mkdir -p /var/run/postgresql \
-  && chown -R postgres /var/run/postgresql \
+RUN mkdir -p /run/postgresql \
+  && chown -R postgres /run/postgresql \
   && mkdir -p $PGDATA
 
 EXPOSE 5432
