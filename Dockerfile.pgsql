@@ -23,7 +23,7 @@ CMD set -x \
   && { [ -s "$PGDATA/PG_VERSION" ] \
      || { chown -R postgres $PGDATA \
           && su-exec postgres initdb -U postgres --locale=en_US.utf8 \
-          && echo -e "local all postgres  trust\nhost rainloop root all md5" > $PGDATA/pg_hba.conf \
+          && echo -e "local all postgres  trust\nhost $DB_NAME $DB_USER all md5" > $PGDATA/pg_hba.conf \
           && sed -i  -r "s/#?(track_activities|track_counts|autovacuum) = (off|on)/\1 = off/g" $PGDATA/postgresql.conf \
           && su-exec postgres pg_ctl -w start \
           && psql -U postgres -c "CREATE DATABASE $DB_NAME" \
