@@ -35,4 +35,4 @@ filesystem_folder = /var/lib/radicale\n\
 
 EXPOSE 80
 
-CMD  radicale -f -D -C /etc/radicale.conf
+CMD  radicale -f -C /etc/radicale.conf
