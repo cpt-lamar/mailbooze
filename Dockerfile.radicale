@@ -4,12 +4,17 @@ FROM $BASE_IMAGE
 RUN set -x \
   && apk update \
   && apk add --no-cache python3 gettext \
-  && pip3 install radicale \
+  && apk add --no-cache --virtual build-deps gcc make python3-dev musl-dev linux-headers libffi-dev \
+  && pip3 install radicale==1.1.2 passlib bcrypt \
+  && apk del build-deps \
   && mkdir -p /var/lib/radicale/
 
 ENV IMAP_HOST\
   IMAP_PORT\
   IMAP_SSL
+
+VOLUME ["/var/lib/radicale"]
+VOLUME ["/etc/auth"]
 
 #radicale configuration
 RUN echo -e "\
@@ -17,20 +22,17 @@ RUN echo -e "\
 hosts = 0.0.0.0:80\n\
 \n\
 [auth]\n\
-type = IMAP\n\
-imap_hostname = \$IMAP_HOST\n\
-imap_port = \$IMAP_PORT\n\
-imap_ssl = \$IMAP_SSL\n\
+type = htpasswd\n\
+htpasswd_filename = /etc/auth/passwords\n\
+htpasswd_encryption = bcrypt\n\
 \n\
 [rights]\n\
 type = owner_only\n\
+\n\
 [storage]\n\
 filesystem_folder = /var/lib/radicale\n\
-" > /etc/radicale.conf.temp
-
-VOLUME /var/lib/radicale
+" > /etc/radicale.conf
 
 EXPOSE 80
 
-CMD  envsubst < /etc/radicale.conf.temp > /etc/radicale.conf \
-  && radicale -f -D -C /etc/radicale.conf
+CMD  radicale -f -D -C /etc/radicale.conf

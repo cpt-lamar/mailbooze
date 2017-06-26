@@ -8,6 +8,7 @@ RUN mkdir /etc/dovecot/ \
   && adduser -D -G users vmail
 
 VOLUME ["/mail"]
+VOLUME ["/etc/auth"]
 
 RUN echo -e "\
 log_path=/dev/stderr\n\
@@ -23,12 +24,13 @@ auth_mechanisms = plain login\n\
 maildir_very_dirty_syncs = yes\n\
 mail_location = maildir:/mail/%n\n\
 passdb {\n\
-  args = scheme=CRYPT username_format=%n /mail/users\n\
+  args = scheme=BLF-CRYPT username_format=%n /etc/auth/passwords\n\
   driver = passwd-file\n\
 }\n\
 userdb {\n\
-  args = username_format=%n /mail/users\n\
+  args = username_format=%n /etc/auth/users\n\
   driver = passwd-file\n\
+  default_fields = uid=vmail gid=users \n\
 }\n\
 protocol lmtp {\n\
   ssl = no\n\
