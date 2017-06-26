@@ -1,4 +1,5 @@
-version: '2'
+version: '3'
+
 services:
   haraka:
     build:
@@ -15,6 +16,7 @@ services:
      - "25:25"
     volumes:
      - $LOCAL_FOLDER/haraka-data:/opt/haraka/queue
+
   dovecot:
     build:
       context: .
@@ -27,6 +29,8 @@ services:
      - "143:143"
     volumes:
      - $LOCAL_FOLDER/dovecot-data:/mail/
+     - $LOCAL_FOLDER/auth-data:/etc/auth/
+
   nginx:
     build:
       context: .
@@ -44,6 +48,7 @@ services:
       - "8090:80"
     depends_on:
       - php
+
   php:
     build:
       context: .
@@ -61,10 +66,11 @@ services:
      - DB_HOST=postgresql
      - DB_PORT=5432
      - DB_NAME=rainloop
-     - DB_USER=root
-     - DB_PASSWORD=root
+     - DB_USER=rainloop
+     - DB_PASSWORD=rainloop
     volumes:
       - $LOCAL_FOLDER/webmail-data:/var/www/html/data
+
   postgresql:
     build:
       context: .
@@ -79,6 +85,7 @@ services:
      - DB_PASSWORD=root
     volumes: 
      - $LOCAL_FOLDER/postgresql-data:/var/lib/postgresql/data
+
   fetchmail:
     build:
       context: .
@@ -89,6 +96,7 @@ services:
     env_file: .env
     volumes:
      - $LOCAL_FOLDER/fetchmail-data:/etc/fetchmail
+
   radicale:
     build:
       context: .
@@ -96,11 +104,8 @@ services:
        - BASE_IMAGE
       dockerfile: Dockerfile.radicale
     image: radicale
-    environment:
-     - IMAP_HOST=dovecot
-     - IMAP_PORT=143
-     - IMAP_SSL=False
     ports:
      - "8091:80"
     volumes:
      - $LOCAL_FOLDER/radicale-data:/var/lib/radicale
+     - $LOCAL_FOLDER/auth-data:/etc/auth/
