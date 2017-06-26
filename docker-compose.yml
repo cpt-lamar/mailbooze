@@ -66,8 +66,8 @@ services:
      - DB_HOST=postgresql
      - DB_PORT=5432
      - DB_NAME=rainloop
-     - DB_USER=rainloop
-     - DB_PASSWORD=rainloop
+     - DB_USER=root
+     - DB_PASSWORD=root
     volumes:
       - $LOCAL_FOLDER/webmail-data:/var/www/html/data
 
