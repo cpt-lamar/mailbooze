@@ -48,7 +48,7 @@ max_unrecognized_commands" > config/plugins \
 /opt/haraka/queue/" > config/queue_dir \
 \
   && echo -e "\
-nodes=1\n\
+nodes=0\n\
 daemonize=false\n\
 " > config/smtp.ini \
 \
