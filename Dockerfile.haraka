@@ -3,10 +3,11 @@ FROM $BASE_IMAGE
 
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
-RUN apk add --update --no-cache nodejs nodejs-npm openssl gettext bind-tools && \
+RUN apk update && \
+  apk add --no-cache nodejs nodejs-npm openssl gettext bind-tools && \
   apk add --no-cache --virtual build-deps python make gcc g++ && \
   npm config set strict-ssl false && \
-  npm install -g Haraka && \
+  npm install --unsafe -g Haraka && \
   apk del build-deps && \
   mkdir -p /opt/haraka/queue
 
@@ -61,5 +62,5 @@ EXPOSE 25
 CMD envsubst < /opt/haraka/config/host_list.temp > /opt/haraka/config/host_list \
   && envsubst < /opt/haraka/config/lmtp.ini.temp > /opt/haraka/config/lmtp.ini  \
   &&  echo -e "$(dig -x $(dig $DOMAIN +short) +short)" > /opt/haraka/config/me \
-  && /usr/bin/haraka -c /opt/haraka/
+  && exec /usr/bin/haraka -c /opt/haraka/
 

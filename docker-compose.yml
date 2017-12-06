@@ -27,6 +27,7 @@ services:
     env_file: .env
     ports:
      - "143:143"
+     - "110:110"
     volumes:
      - $LOCAL_FOLDER/dovecot-data:/mail/
      - $LOCAL_FOLDER/auth-data:/etc/auth/

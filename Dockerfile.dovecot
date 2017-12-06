@@ -5,7 +5,8 @@ RUN mkdir /etc/dovecot/ \
   && echo "ssl = no" > /etc/dovecot/dovecot.conf \
   && apk add --update --no-cache dovecot \
   && mkdir /mail \
-  && adduser -D -G users vmail
+  && mkdir -p /etc/ssl/certs/ \
+  && adduser -D -G users -u 5000 vmail
 
 VOLUME ["/mail"]
 VOLUME ["/etc/auth"]
@@ -43,10 +44,10 @@ service lmtp {\n\
 }\
 " > /etc/dovecot/dovecot.conf
 
-EXPOSE 24 143
+EXPOSE 24 110 143
 
-CMD chown vmail:users /mail \
+CMD chown vmail /mail \
     && openssl req -new -x509 -nodes -config /etc/dovecot/dovecot-openssl.cnf \
      -out /etc/ssl/certs/dovecot.pem -keyout /etc/ssl/certs/dovecot.key -days 365 \
     && chmod 0400 /etc/ssl/certs/dovecot.key \
-    && dovecot -F
+    && exec dovecot -F

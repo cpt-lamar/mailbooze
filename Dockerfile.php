@@ -3,8 +3,8 @@ FROM $BASE_IMAGE
 
 WORKDIR /var/www/html
 
+#  && echo -e "http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/\nhttp://dl-cdn.alpinelinux.org/alpine/latest-stable/community/" > /etc/apk/repositories \
 RUN set -x \
-  && echo "http://dl-cdn.alpinelinux.org/alpine/latest-stable/community/" >> /etc/apk/repositories \
   && apk update \
   && apk add --no-cache unzip curl php7 php7-fpm php7-curl php7-iconv php7-json php7-xml php7-dom php7-openssl php7-zlib php7-opcache php7-gd php7-pdo_pgsql php7-simplexml msmtp gettext su-exec \
   && addgroup -g 82 -S www-data \
@@ -83,6 +83,6 @@ CMD  envsubst < /etc/php7/php-fpm.conf.temp > /etc/php7/php-fpm.conf \
             -e "s/^pdo_user.*$/pdo_user = $DB_USER/" \
             -e "s/^pdo_password.*$/pdo_password = $DB_PASSWORD/" \
             data/_data_/_default_/configs/application.ini \
-  && php-fpm7
+  && exec php-fpm7
 
 EXPOSE 9000

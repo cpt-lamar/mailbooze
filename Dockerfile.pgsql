@@ -30,4 +30,4 @@ CMD set -x \
           && psql -U postgres -c "CREATE USER $DB_USER WITH SUPERUSER PASSWORD '$DB_PASSWORD'" \
           && su-exec postgres pg_ctl -w stop ;} \
     ;} \
-  && su-exec postgres postgres -c listen_addresses='*'
+  && exec su-exec postgres postgres -c listen_addresses='*'

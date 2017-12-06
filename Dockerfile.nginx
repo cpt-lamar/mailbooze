@@ -57,7 +57,7 @@ http {\n\
 
 CMD envsubst '$NGINX_PROCS,$NGINX_CONN,$PHP_HOST,$PHP_PORT'\
       < /etc/nginx/nginx.conf.temp > /etc/nginx/nginx.conf\
-      && nginx
+      && exec nginx
 
 
 EXPOSE 80
