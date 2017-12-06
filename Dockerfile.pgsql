@@ -1,5 +1,4 @@
-ARG BASE_IMAGE
-FROM $BASE_IMAGE
+FROM alpine:latest
 
 ENV LANG=en_US.utf8 \
     PGDATA="/var/lib/postgresql/data"

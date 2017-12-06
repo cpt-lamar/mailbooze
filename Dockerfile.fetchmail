@@ -1,5 +1,4 @@
-ARG BASE_IMAGE
-FROM $BASE_IMAGE
+FROM alpine:latest
 
 RUN apk add --update --no-cache fetchmail ca-certificates
 
