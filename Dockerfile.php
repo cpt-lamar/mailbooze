@@ -5,7 +5,7 @@ WORKDIR /var/www/html
 #  && echo -e "http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/\nhttp://dl-cdn.alpinelinux.org/alpine/latest-stable/community/" > /etc/apk/repositories \
 RUN set -x \
   && apk update \
-  && apk add --no-cache unzip curl php7 php7-fpm php7-curl php7-iconv php7-json php7-xml php7-dom php7-openssl php7-zlib php7-opcache php7-gd php7-pdo_pgsql php7-simplexml msmtp gettext su-exec \
+  && apk add --no-cache unzip curl php7 php7-fpm php7-curl php7-iconv php7-json php7-xml php7-dom php7-openssl php7-zlib php7-opcache php7-gd php7-pdo_sqlite php7-simplexml msmtp gettext su-exec \
   && addgroup -g 82 -S www-data \
   && adduser -u 82 -D -S -G www-data www-data \
   && curl http://www.rainloop.net/repository/webmail/rainloop-community-latest.zip -o rainloop.zip \
@@ -27,13 +27,7 @@ ENV PHP_PROCS\
   MSA_TLS\
   MSA_STARTTLS\
   MSA_USER\
-  MSA_PASSWORD\
-  DB_HOST\
-  DB_TYPE\
-  DB_NAME\
-  DB_PORT\
-  DB_USER\
-  DB_PASSWORD
+  MSA_PASSWORD
 
 #php-fpm configuration
 RUN echo -e "\
@@ -77,10 +71,7 @@ CMD  envsubst < /etc/php7/php-fpm.conf.temp > /etc/php7/php-fpm.conf \
   && su-exec www-data sed -i -e "/^\[contacts\]/,/^\[.*\]/ s|^enable.*$|enable = On|" \
             -e "/^\[debug\]/,/^\[.*\]/ s|^enable *=.*$|enable = Off|" \
             -e "s/^mail_func_clear_headers.*/mail_func_clear_headers = On/" \
-            -e "s/^type.*$/type = $DB_TYPE/" \
-            -e "s/^pdo_dsn.*$/pdo_dsn = \"$DB_TYPE:host=$DB_HOST;port=$DB_PORT;dbname=$DB_NAME\"/" \
-            -e "s/^pdo_user.*$/pdo_user = $DB_USER/" \
-            -e "s/^pdo_password.*$/pdo_password = $DB_PASSWORD/" \
+            -e "s/^type.*$/type = sqlite/" \
             data/_data_/_default_/configs/application.ini \
   && exec php-fpm7
 

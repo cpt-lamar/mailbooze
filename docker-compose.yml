@@ -4,8 +4,6 @@ services:
   haraka:
     build:
       context: .
-      args:
-       - BASE_IMAGE
       dockerfile: Dockerfile.haraka
     image: haraka
     env_file: .env
@@ -20,8 +18,6 @@ services:
   dovecot:
     build:
       context: .
-      args:
-       - BASE_IMAGE
       dockerfile: Dockerfile.dovecot
     image: dovecot
     env_file: .env
@@ -35,8 +31,6 @@ services:
   nginx:
     build:
       context: .
-      args:
-       - BASE_IMAGE
       dockerfile: Dockerfile.nginx
     image: nginx
     env_file: .env
@@ -53,8 +47,6 @@ services:
   php:
     build:
       context: .
-      args:
-       - BASE_IMAGE
       dockerfile: Dockerfile.php
     image: php
     env_file: .env
@@ -63,35 +55,12 @@ services:
      - MDA_HOST=dovecot
      - MDA_PORT=143
      - MDA_SECURE=False
-     - DB_TYPE=pgsql
-     - DB_HOST=postgresql
-     - DB_PORT=5432
-     - DB_NAME=rainloop
-     - DB_USER=root
-     - DB_PASSWORD=root
     volumes:
       - $LOCAL_FOLDER/webmail-data:/var/www/html/data
-
-  postgresql:
-    build:
-      context: .
-      args:
-       - BASE_IMAGE
-      dockerfile: Dockerfile.pgsql
-    image: pgsql
-    env_file: .env
-    environment:
-     - DB_NAME=rainloop
-     - DB_USER=root
-     - DB_PASSWORD=root
-    volumes: 
-     - $LOCAL_FOLDER/postgresql-data:/var/lib/postgresql/data
 
   fetchmail:
     build:
       context: .
-      args:
-       - BASE_IMAGE
       dockerfile: Dockerfile.fetchmail
     image: fetchmail
     env_file: .env
@@ -101,8 +70,6 @@ services:
   radicale:
     build:
       context: .
-      args:
-       - BASE_IMAGE
       dockerfile: Dockerfile.radicale
     image: radicale
     ports:

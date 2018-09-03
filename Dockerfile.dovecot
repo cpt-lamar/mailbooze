@@ -16,6 +16,7 @@ protocols = imap pop3 lmtp\n\
 ssl = yes\n\
 ssl_cert = </etc/ssl/certs/dovecot.pem\n\
 ssl_key = </etc/ssl/certs/dovecot.key\n\
+ssl_protocols = !SSLv3\n\
 disable_plaintext_auth=no\n\
 auth_mechanisms = plain login\n\
 #mail_debug = yes\n\

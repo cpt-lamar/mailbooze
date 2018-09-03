@@ -4,13 +4,9 @@ RUN set -x \
   && apk update \
   && apk add --no-cache python3 gettext \
   && apk add --no-cache --virtual build-deps gcc make python3-dev musl-dev linux-headers libffi-dev \
-  && pip3 install radicale==1.1.2 passlib bcrypt \
+  && pip3 install radicale passlib bcrypt \
   && apk del build-deps \
   && mkdir -p /var/lib/radicale/
-
-ENV IMAP_HOST\
-  IMAP_PORT\
-  IMAP_SSL
 
 VOLUME ["/var/lib/radicale"]
 VOLUME ["/etc/auth"]
