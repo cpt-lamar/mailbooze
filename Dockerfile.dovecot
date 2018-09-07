@@ -1,22 +1,33 @@
-FROM alpine:latest
+FROM alpine:edge
 
-RUN mkdir /etc/dovecot/ \
+RUN apk update && apk upgrade --purge \
+  && mkdir -p /etc/dovecot/certs \
   && echo "ssl = no" > /etc/dovecot/dovecot.conf \
-  && apk add --update --no-cache dovecot \
+  && apk add --no-cache dovecot dovecot-submissiond dovecot-pigeonhole-plugin dovecot-lmtpd dovecot-pop3d ca-certificates gettext \
   && mkdir /mail \
-  && mkdir -p /etc/ssl/certs/ \
   && adduser -D -G users -u 5000 vmail
 
 VOLUME ["/mail"]
 VOLUME ["/etc/auth"]
+VOLUME ["/etc/dovecot/certs"]
+
+ENV MSA_HOST\
+  MSA_PORT\
+  MSA_AUTH\
+  MSA_USER\
+  MSA_PASSWORD\
+  MSA_TLS
 
 RUN echo -e "\
 log_path=/dev/stderr\n\
-protocols = imap pop3 lmtp\n\
+protocols = imap pop3 lmtp submission\n\
 ssl = yes\n\
-ssl_cert = </etc/ssl/certs/dovecot.pem\n\
-ssl_key = </etc/ssl/certs/dovecot.key\n\
-ssl_protocols = !SSLv3\n\
+ssl_cert = </etc/dovecot/certs/dovecot.pem\n\
+ssl_key = </etc/dovecot/certs/dovecot.key\n\
+ssl_min_protocol = TLSv1\n\
+ssl_dh = </etc/dovecot/certs/dh.pem\n\
+ssl_client_ca_dir = /etc/ssl/certs/\n\
+ssl_client_ca_file = /etc/ssl/certs/ca-certificates.crt\n\
 disable_plaintext_auth=no\n\
 auth_mechanisms = plain login\n\
 #mail_debug = yes\n\
@@ -35,19 +46,31 @@ userdb {\n\
 }\n\
 protocol lmtp {\n\
   ssl = no\n\
+  mail_plugins = \$mail_plugins sieve\n\
 }\n\
 service lmtp {\n\
   inet_listener lmtp {\n\
     address = * ::\n\
     port =24\n\
   }\n\
-}\
-" > /etc/dovecot/dovecot.conf
+}\n\
+plugin {\n\
+   sieve = file:~/sieve;active=~/.dovecot.sieve\n\
+   sieve_global = /var/lib/dovecot/sieve/global/\n\
+}\n\
+submission_relay_host = \$MSA_HOST\n\
+submission_relay_port = \$MSA_PORT\n\
+submission_relay_user = \$MSA_USER\n\
+submission_relay_password = \$MSA_PASSWORD\n\
+submission_relay_ssl = \$MSA_TLS \n\
+submission_relay_ssl_verify = yes\n\
+" > /etc/dovecot/dovecot.conf.temp
 
-EXPOSE 24 110 143
+EXPOSE 24 110 143 587
 
 CMD chown vmail /mail \
-    && openssl req -new -x509 -nodes -config /etc/dovecot/dovecot-openssl.cnf \
-     -out /etc/ssl/certs/dovecot.pem -keyout /etc/ssl/certs/dovecot.key -days 365 \
-    && chmod 0400 /etc/ssl/certs/dovecot.key \
+    && envsubst < /etc/dovecot/dovecot.conf.temp > /etc/dovecot/dovecot.conf  \
+    && { if ! ls /etc/dovecot/certs/dovecot.key 2>/dev/null; then openssl req -new -x509 -nodes -config /etc/dovecot/dovecot-openssl.cnf  -out /etc/dovecot/certs/dovecot.pem -keyout /etc/dovecot/certs/dovecot.key -days 365; fi; } \
+    && { if ! ls /etc/dovecot/certs/dh.pem 2>/dev/null; then openssl dhparam -out /etc/dovecot/certs/dh.pem 4096; fi; }  \
+    && chmod 0400 /etc/dovecot/certs/dovecot.key \
     && exec dovecot -F

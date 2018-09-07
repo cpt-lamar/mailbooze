@@ -5,7 +5,7 @@ WORKDIR /var/www/html
 #  && echo -e "http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/\nhttp://dl-cdn.alpinelinux.org/alpine/latest-stable/community/" > /etc/apk/repositories \
 RUN set -x \
   && apk update \
-  && apk add --no-cache unzip curl php7 php7-fpm php7-curl php7-iconv php7-json php7-xml php7-dom php7-openssl php7-zlib php7-opcache php7-gd php7-pdo_sqlite php7-simplexml msmtp gettext su-exec \
+  && apk add --no-cache unzip curl php7 php7-fpm php7-curl php7-iconv php7-json php7-xml php7-dom php7-openssl php7-zlib php7-opcache php7-gd php7-pdo_sqlite php7-simplexml gettext su-exec \
   && addgroup -g 82 -S www-data \
   && adduser -u 82 -D -S -G www-data www-data \
   && curl http://www.rainloop.net/repository/webmail/rainloop-community-latest.zip -o rainloop.zip \
@@ -24,10 +24,7 @@ ENV PHP_PROCS\
   MSA_HOST\
   MSA_PORT\
   MSA_AUTH\
-  MSA_TLS\
-  MSA_STARTTLS\
-  MSA_USER\
-  MSA_PASSWORD
+  MSA_SECURE
 
 #php-fpm configuration
 RUN echo -e "\
@@ -45,29 +42,25 @@ clear_env = no\n\
 catch_workers_output = yes\n\
 listen = [::]:9000\n" > /etc/php7/php-fpm.conf.temp
 
-RUN echo -e "sendmail_path = msmtp --read-envelope-from -t" >> /etc/php7/php.ini
-
-#msmtp (sendmail) configuration
 RUN echo -e "\
-account default\n\
-host \$MSA_HOST\n\
-port \$MSA_PORT\n\
-auth \$MSA_AUTH\n\
-tls \$MSA_TLS\n\
-tls_starttls \$MSA_STARTTLS\n\
-tls_certcheck off\n\
-#from \$MSA_USER\n\
-user \$MSA_USER\n\
-password \$MSA_PASSWORD \n\
-" > /etc/msmtprc.temp
+imap_host = \"\$MDA_HOST\"\n\
+imap_port = \$MDA_PORT\n\
+imap_secure = \"\$MDA_SECURE\"\n\
+imap_short_login = On\n\
+smtp_host = \"\$MSA_HOST\"\n\
+smtp_port = \$MSA_PORT\n\
+smtp_secure = \"\$MSA_SECURE\"\n\
+smtp_short_login = On\n\
+smtp_auth = \$MSA_AUTH\n\
+smtp_php_mail = Off" > /etc/domain.ini.temp
+
 
 VOLUME /var/www/html/data
 
 CMD  envsubst < /etc/php7/php-fpm.conf.temp > /etc/php7/php-fpm.conf \
-  && envsubst < /etc/msmtprc.temp > /etc/msmtprc \
   && chown www-data:www-data data \
   && su-exec www-data php7 index.php \
-  && echo -e "imap_host = \"$MDA_HOST\"\nimap_port = $MDA_PORT\nimap_secure = \"$MDA_SECURE\"\nimap_short_login = On\nsmtp_php_mail = On" > data/_data_/_default_/domains/$DOMAIN.ini \
+  && envsubst < /etc/domain.ini.temp > data/_data_/_default_/domains/$DOMAIN.ini \
   && su-exec www-data sed -i -e "/^\[contacts\]/,/^\[.*\]/ s|^enable.*$|enable = On|" \
             -e "/^\[debug\]/,/^\[.*\]/ s|^enable *=.*$|enable = Off|" \
             -e "s/^mail_func_clear_headers.*/mail_func_clear_headers = On/" \

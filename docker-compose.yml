@@ -14,7 +14,7 @@ services:
      - "25:25"
     volumes:
      - $LOCAL_FOLDER/haraka-data:/opt/haraka/queue
-
+  
   dovecot:
     build:
       context: .
@@ -24,6 +24,7 @@ services:
     ports:
      - "143:143"
      - "110:110"
+     - "587:587"
     volumes:
      - $LOCAL_FOLDER/dovecot-data:/mail/
      - $LOCAL_FOLDER/auth-data:/etc/auth/
@@ -55,6 +56,10 @@ services:
      - MDA_HOST=dovecot
      - MDA_PORT=143
      - MDA_SECURE=False
+     - MSA_HOST=dovecot
+     - MSA_PORT=587
+     - MSA_SECURE=TLS
+     - MSA_AUTH=On
     volumes:
       - $LOCAL_FOLDER/webmail-data:/var/www/html/data
 
