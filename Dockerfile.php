@@ -64,6 +64,7 @@ CMD  envsubst < /etc/php7/php-fpm.conf.temp > /etc/php7/php-fpm.conf \
   && su-exec www-data sed -i -e "/^\[contacts\]/,/^\[.*\]/ s|^enable.*$|enable = On|" \
             -e "/^\[debug\]/,/^\[.*\]/ s|^enable *=.*$|enable = Off|" \
             -e "s/^mail_func_clear_headers.*/mail_func_clear_headers = On/" \
+            -e "s/^smtp_show_server_errors.*/smtp_show_server_errors = On/" \
             -e "s/^type.*$/type = sqlite/" \
             data/_data_/_default_/configs/application.ini \
   && exec php-fpm7
