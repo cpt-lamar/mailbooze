@@ -3,15 +3,16 @@ FROM alpine:edge
 RUN apk update && apk upgrade --purge \
   && mkdir -p /etc/dovecot/certs \
   && echo "ssl = no" > /etc/dovecot/dovecot.conf \
-  && apk add --no-cache dovecot dovecot-submissiond dovecot-pigeonhole-plugin dovecot-lmtpd dovecot-pop3d ca-certificates gettext \
-  && mkdir /mail \
+  && apk add --no-cache dovecot dovecot-submissiond dovecot-pigeonhole-plugin dovecot-lmtpd dovecot-pop3d ca-certificates gettext rspamd-client \
   && adduser -D -G users -u 5000 vmail
 
 VOLUME ["/mail"]
+VOLUME ["/users"]
 VOLUME ["/etc/auth"]
 VOLUME ["/etc/dovecot/certs"]
 
-ENV MSA_HOST\
+ENV DOMAIN\
+  MSA_HOST\
   MSA_PORT\
   MSA_AUTH\
   MSA_USER\
@@ -19,8 +20,33 @@ ENV MSA_HOST\
   MSA_TLS
 
 RUN echo -e "\
+require [\"vnd.dovecot.pipe\", \"copy\", \"imapsieve\", \"environment\", \"variables\"];\n\
+if environment :matches \"imap.user\" \"*\" {set \"username\" \"\${1}\";}\n\
+pipe :copy \"learn-spam.sh\" [ \"\${username}\" ];\n\
+" > /usr/lib/dovecot/sieve/report-spam.sieve
+
+RUN echo -e "\
+require [\"vnd.dovecot.pipe\", \"copy\", \"imapsieve\", \"environment\", \"variables\"];\n\
+if environment :matches \"imap.mailbox\" \"*\" {set \"mailbox\" \"\${1}\";}\n\
+if string \"\${mailbox}\" \"Trash\" { stop;}\n\
+if environment :matches \"imap.user\" \"*\" {set \"username\" \"\${1}\";}\n\
+pipe :copy \"learn-ham.sh\" [ \"\${username}\" ];\n\
+" > /usr/lib/dovecot/sieve/report-ham.sieve
+
+RUN mkdir -p /usr/lib/dovecot/sieve/global/ && echo -e "\
+require \"fileinto\";\
+if header :contains \"X-Rspamd-Bar\" \"++++++++++\" { fileinto \"Spam\";}\
+" > /usr/lib/dovecot/sieve/global/file-spam.sieve
+
+RUN echo -e "#!/bin/sh\nexec /usr/bin/rspamc learn_spam -h rspamd" > /usr/lib/dovecot/sieve/learn-spam.sh \
+    && echo -e "#!/bin/sh\nexec /usr/bin/rspamc learn_ham -h rspamd" > /usr/lib/dovecot/sieve/learn-ham.sh \
+    && chmod +x /usr/lib/dovecot/sieve/learn-*.sh \
+    && chown vmail:users /usr/lib/dovecot/sieve /usr/lib/dovecot/sieve/global
+
+
+RUN echo -e "\
 log_path=/dev/stderr\n\
-protocols = imap pop3 lmtp submission\n\
+protocols = imap pop3 lmtp submission sieve\n\
 ssl = yes\n\
 ssl_cert = </etc/dovecot/certs/dovecot.pem\n\
 ssl_key = </etc/dovecot/certs/dovecot.key\n\
@@ -28,12 +54,14 @@ ssl_min_protocol = TLSv1\n\
 ssl_dh = </etc/dovecot/certs/dh.pem\n\
 ssl_client_ca_dir = /etc/ssl/certs/\n\
 ssl_client_ca_file = /etc/ssl/certs/ca-certificates.crt\n\
+postmaster_address = postmaster@\$DOMAIN\n\
 disable_plaintext_auth=no\n\
 auth_mechanisms = plain login\n\
 #mail_debug = yes\n\
 #auth_debug=yes\n\
 #verbose_ssl=yes\n\
 maildir_very_dirty_syncs = yes\n\
+mail_home = /users/%n\n\
 mail_location = maildir:/mail/%n\n\
 passdb {\n\
   args = scheme=BLF-CRYPT username_format=%n /etc/auth/passwords\n\
@@ -43,6 +71,9 @@ userdb {\n\
   args = username_format=%n /etc/auth/users\n\
   driver = passwd-file\n\
   default_fields = uid=vmail gid=users \n\
+}\n\
+protocol imap {\n\
+  mail_plugins = \$mail_plugins imap_sieve\n\
 }\n\
 protocol lmtp {\n\
   ssl = no\n\
@@ -56,7 +87,23 @@ service lmtp {\n\
 }\n\
 plugin {\n\
    sieve = file:~/sieve;active=~/.dovecot.sieve\n\
-   sieve_global = /var/lib/dovecot/sieve/global/\n\
+   sieve_after = /usr/lib/dovecot/sieve/global/file-spam.sieve\n\
+   sieve_plugins = sieve_imapsieve sieve_extprograms\n\
+   \n\
+   # From elsewhere to Spam folder\n\
+   imapsieve_mailbox1_name = Spam\n\
+   imapsieve_mailbox1_causes = COPY\n\
+   imapsieve_mailbox1_before = file:/usr/lib/dovecot/sieve/report-spam.sieve\n\
+   \n\
+   # From Spam folder to elsewhere\n\
+   imapsieve_mailbox2_name = *\n\
+   imapsieve_mailbox2_from = Spam\n\
+   imapsieve_mailbox2_causes = COPY\n\
+   imapsieve_mailbox2_before = file:/usr/lib/dovecot/sieve/report-ham.sieve\n\
+   \n\
+   sieve_pipe_bin_dir = /usr/lib/dovecot/sieve\n\
+   \n\
+   sieve_global_extensions = +vnd.dovecot.pipe +vnd.dovecot.environment\n\
 }\n\
 submission_relay_host = \$MSA_HOST\n\
 submission_relay_port = \$MSA_PORT\n\
@@ -66,9 +113,9 @@ submission_relay_ssl = \$MSA_TLS \n\
 submission_relay_ssl_verify = yes\n\
 " > /etc/dovecot/dovecot.conf.temp
 
-EXPOSE 24 110 143 587
+EXPOSE 24 110 143 587 4190
 
-CMD chown vmail /mail \
+CMD chown vmail /mail /users \
     && envsubst < /etc/dovecot/dovecot.conf.temp > /etc/dovecot/dovecot.conf  \
     && { if ! ls /etc/dovecot/certs/dovecot.key 2>/dev/null; then openssl req -new -x509 -nodes -config /etc/dovecot/dovecot-openssl.cnf  -out /etc/dovecot/certs/dovecot.pem -keyout /etc/dovecot/certs/dovecot.key -days 365; fi; } \
     && { if ! ls /etc/dovecot/certs/dh.pem 2>/dev/null; then openssl dhparam -out /etc/dovecot/certs/dh.pem 4096; fi; }  \

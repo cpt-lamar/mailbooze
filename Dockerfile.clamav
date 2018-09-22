@@ -1,0 +1,35 @@
+FROM alpine:latest
+
+#WORKDIR /var/www/html
+
+RUN set -x \
+  && apk update --purge \
+  && apk add --no-cache clamav-daemon clamav-libunrar freshclam
+
+RUN echo -e "\
+TemporaryDirectory /tmp\n\
+DatabaseDirectory /var/lib/clamav\n\
+LocalSocket /run/clamav/clamd.sock\n\
+TCPSocket 3310\n\
+StreamMaxLength 25M\n\
+Bytecode yes\n\
+User clamav\n\
+Foreground yes\n\
+Debug no" > /etc/clamd.conf
+
+RUN echo -e "\
+DatabaseDirectory /var/lib/clamav\n\
+DatabaseOwner clamav\n\
+DatabaseMirror db.FR.clamav.net\n\
+NotifyClamd /etc/clamav/clamd.conf\n\
+Foreground yes\n\
+Checks 24\n\
+SafeBrowsing yes" > /etc/freshclam.conf
+
+RUN mkdir /run/clamav && chown clamav:clamav /run/clamav
+
+VOLUME /var/lib/clamav
+
+EXPOSE 3310
+
+CMD chown clamav:clamav /var/lib/clamav && exec clamd -c /etc/clamd.conf

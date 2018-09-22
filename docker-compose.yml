@@ -28,6 +28,7 @@ services:
     volumes:
      - $LOCAL_FOLDER/dovecot-data:/mail/
      - $LOCAL_FOLDER/auth-data:/etc/auth/
+     - $LOCAL_FOLDER/sieve-data:/users/
 
   nginx:
     build:
@@ -55,6 +56,7 @@ services:
      - PHP_PROCS=2
      - MDA_HOST=dovecot
      - MDA_PORT=143
+     - MDA_SIEVE_PORT=4190
      - MDA_SECURE=False
      - MSA_HOST=dovecot
      - MSA_PORT=587
@@ -82,3 +84,22 @@ services:
     volumes:
      - $LOCAL_FOLDER/radicale-data:/var/lib/radicale
      - $LOCAL_FOLDER/auth-data:/etc/auth/
+  
+  clamav:
+    build:
+      context: .
+      dockerfile: Dockerfile.clamav
+    image: clamav
+    volumes:
+     - $LOCAL_FOLDER/clamav-data/lib/:/var/lib/clamav
+  
+  rspamd:
+    build:
+      context: .
+      dockerfile: Dockerfile.rspamd
+    image: rspamd
+    ports:
+     - "11334:11334"
+
+  redis:
+    image: redis:alpine

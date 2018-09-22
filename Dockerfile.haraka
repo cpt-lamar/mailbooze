@@ -2,13 +2,14 @@ FROM alpine:latest
 
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
-RUN apk update && \
-  apk add --no-cache nodejs nodejs-npm openssl gettext bind-tools && \
-  apk add --no-cache --virtual build-deps python make gcc g++ && \
-  npm config set strict-ssl false && \
-  npm install --unsafe -g Haraka && \
-  apk del build-deps && \
-  mkdir -p /opt/haraka/queue
+RUN apk update \
+  && apk add --no-cache nodejs nodejs-npm openssl gettext bind-tools \
+  && apk add --no-cache --virtual build-deps python make gcc g++ \
+  && npm config set strict-ssl false \
+  && npm install --unsafe -g Haraka \
+  && npm install maxmind haraka-plugin-fcrdns haraka-plugin-karma haraka-plugin-rspamd haraka-plugin-redis haraka-plugin-geoip \
+  && apk del build-deps \
+  && mkdir -p /opt/haraka/queue
 
 WORKDIR /opt/haraka
 
@@ -17,10 +18,29 @@ ENV DOMAIN\
   MDA_PORT
 
 RUN haraka --install . \
+\
   && openssl req -x509 -nodes -days 2190 -newkey rsa:2048 \
       -keyout config/tls_key.pem -out config/tls_cert.pem \
       -subj "/C=AA/ST=A/L=A/O=A/OU=A/CN=A" \
+  && echo -e "\
+tls\n\
+dnsbl\n\
+geoip\n\
+fcrdns\n\
+data.uribl\n\
+aliases\n\
+helo.checks\n\
+clamd\n\
+rspamd\n\
+mail_from.is_resolvable\n\
+rcpt_to.in_host_list\n\
+data.headers\n\
+karma\n\
+queue/lmtp\n\
+" > config/plugins \
+\
   && echo -e "\$DOMAIN" > config/host_list.temp \
+\
   && echo -e "\
 [\$DOMAIN]\n\
 host=\$MDA_HOST\n\
@@ -35,14 +55,26 @@ requestCert=true\n\
 " > config/tls.ini \
 \
   && echo -e "\
-tls\n\
-access\n\
-helo.checks\n\
-mail_from.is_resolvable\n\
-rcpt_to.in_host_list\n\
-data.headers\n\
-queue/lmtp\n\
-max_unrecognized_commands" > config/plugins \
+clamd_socket=clamav:3310\n\
+" > config/clamd.ini \
+\
+  && echo -e "\
+reject_no_mx=0\n\
+" > config/mail_from.is_resolvable.ini \
+\
+  && echo -e "\
+[reject]\n\
+no_rdns=false\n\
+no_fcrdns=false\n\
+invalid_tld=false\n\
+generic_rdns=false\n\
+" > config/fcrdns.ini \
+\
+  && echo -e "\
+dbdir=/usr/local/share/GeoIP\n\
+[show]\n\
+city=true\n\
+" > config/geoip.ini \
 \
   && echo -e "\
 /opt/haraka/queue/" > config/queue_dir \
@@ -52,9 +84,14 @@ nodes=0\n\
 daemonize=false\n\
 " > config/smtp.ini \
 \
-  && echo -e "5" > config/loglevel
+  && cp /node_modules/haraka-plugin-karma/config/karma.ini config \
+  && sed -i -e "s/^\[redis\]/\[redis\]\nhost = redis\ndb = karma/" config/karma.ini \
+  && cp /usr/lib/node_modules/Haraka/config/data.uribl.ini config \
+  && cp /usr/lib/node_modules/Haraka/config/dnsbl.ini config \
+  && cp /node_modules/haraka-plugin-rspamd/config/rspamd.ini config \
+  && sed -i -e "s/^;host =.*/host = rspamd/" config/rspamd.ini
 
-VOLUME /opt/haraka
+VOLUME /usr/local/share/GeoIP
 
 EXPOSE 25
 

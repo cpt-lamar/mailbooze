@@ -20,6 +20,7 @@ ENV PHP_PROCS\
   DOMAIN\
   MDA_HOST\
   MDA_PORT\
+  MDA_SIEVE_PORT\
   MDA_SECURE\
   MSA_HOST\
   MSA_PORT\
@@ -47,6 +48,11 @@ imap_host = \"\$MDA_HOST\"\n\
 imap_port = \$MDA_PORT\n\
 imap_secure = \"\$MDA_SECURE\"\n\
 imap_short_login = On\n\
+sieve_use = On\n\
+sieve_allow_raw = On\n\
+sieve_host =\"\$MDA_HOST\"\n\
+sieve_port = \"\$MDA_SIEVE_PORT\"\n\
+sieve_secure = \"None\"\n\
 smtp_host = \"\$MSA_HOST\"\n\
 smtp_port = \$MSA_PORT\n\
 smtp_secure = \"\$MSA_SECURE\"\n\
@@ -67,6 +73,9 @@ CMD  envsubst < /etc/php7/php-fpm.conf.temp > /etc/php7/php-fpm.conf \
             -e "s/^smtp_show_server_errors.*/smtp_show_server_errors = On/" \
             -e "s/^type.*$/type = sqlite/" \
             data/_data_/_default_/configs/application.ini \
+  && sed -i -e "s/^upload_max_filesize.*/upload_max_filesize = 25M/" \
+            -e "s/^post_max_size.*/post_max_size = 25M/" \
+            /etc/php7/php.ini \
   && exec php-fpm7
 
 EXPOSE 9000

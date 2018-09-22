@@ -1,0 +1,18 @@
+FROM alpine:edge
+
+RUN set -x \
+  && apk update --purge \
+  && apk add --no-cache rspamd rspamd-controller
+
+RUN  sed -i -e "s/type = \"file\"/type = \"console\"/" /etc/rspamd/rspamd.conf \
+  && sed -i -e "s/localhost/*/" /etc/rspamd/worker-*.conf   \
+  && sed -i -e "s/.*password.*/password = \"toto\"/" /etc/rspamd/worker-controller.inc \
+  && sed -i -e "s/.*secure_ip.*/secure_ip = \"dovecot\"/" /etc/rspamd/worker-controller.inc
+
+USER rspamd
+
+VOLUME /var/lib/rspamd
+
+EXPOSE 11333 11334
+
+CMD ["/usr/sbin/rspamd","-f"]
