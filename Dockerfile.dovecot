@@ -1,9 +1,9 @@
-FROM alpine:edge
+FROM alpine:3.8
 
 RUN apk update && apk upgrade --purge \
   && mkdir -p /etc/dovecot/certs \
   && echo "ssl = no" > /etc/dovecot/dovecot.conf \
-  && apk add --no-cache dovecot dovecot-submissiond dovecot-pigeonhole-plugin dovecot-lmtpd dovecot-pop3d ca-certificates gettext rspamd-client \
+  && apk add --no-cache dovecot dovecot-pigeonhole-plugin dovecot-fts-lucene ca-certificates gettext rspamd-client \
   && adduser -D -G users -u 5000 vmail
 
 VOLUME ["/mail"]
@@ -63,6 +63,7 @@ auth_mechanisms = plain login\n\
 maildir_very_dirty_syncs = yes\n\
 mail_home = /users/%n\n\
 mail_location = maildir:/mail/%n\n\
+mail_plugins=fts fts_lucene\n\
 passdb {\n\
   args = scheme=BLF-CRYPT username_format=%n /etc/auth/passwords\n\
   driver = passwd-file\n\
@@ -104,6 +105,14 @@ plugin {\n\
    sieve_pipe_bin_dir = /usr/lib/dovecot/sieve\n\
    \n\
    sieve_global_extensions = +vnd.dovecot.pipe +vnd.dovecot.environment\n\
+   \n\
+   fts = lucene\n\
+   fts_lucene = whitespace_chars=@. normalize no_snowball\n\
+   fts_autoindex=yes\n\
+   fts_autoindex_max_recent_msgs=80\n\
+   fts_autoindex_exclude = Junk\n\
+   fts_autoindex_exclude2 = Trash\n\
+   fts_index_timeout=90\n\
 }\n\
 submission_relay_host = \$MSA_HOST\n\
 submission_relay_port = \$MSA_PORT\n\
@@ -118,6 +127,6 @@ EXPOSE 24 110 143 587 4190
 CMD chown vmail /mail /users \
     && envsubst < /etc/dovecot/dovecot.conf.temp > /etc/dovecot/dovecot.conf  \
     && { if ! ls /etc/dovecot/certs/dovecot.key 2>/dev/null; then openssl req -new -x509 -nodes -config /etc/dovecot/dovecot-openssl.cnf  -out /etc/dovecot/certs/dovecot.pem -keyout /etc/dovecot/certs/dovecot.key -days 365; fi; } \
-    && { if ! ls /etc/dovecot/certs/dh.pem 2>/dev/null; then openssl dhparam -out /etc/dovecot/certs/dh.pem 4096; fi; }  \
+    && { if ! ls /etc/dovecot/certs/dh.pem 2>/dev/null; then openssl dhparam -out /etc/dovecot/certs/dh.pem 2048; fi; }  \
     && chmod 0400 /etc/dovecot/certs/dovecot.key \
     && exec dovecot -F

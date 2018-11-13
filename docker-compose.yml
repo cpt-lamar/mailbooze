@@ -13,7 +13,7 @@ services:
     ports:
      - "25:25"
     volumes:
-     - $LOCAL_FOLDER/haraka-data:/opt/haraka/queue
+     - haraka-data:/opt/haraka/queue
   
   dovecot:
     build:
@@ -26,9 +26,9 @@ services:
      - "110:110"
      - "587:587"
     volumes:
-     - $LOCAL_FOLDER/dovecot-data:/mail/
-     - $LOCAL_FOLDER/auth-data:/etc/auth/
-     - $LOCAL_FOLDER/sieve-data:/users/
+     - dovecot-data:/mail/
+     - auth-data:/etc/auth/
+     - sieve-data:/users/
 
   nginx:
     build:
@@ -63,7 +63,7 @@ services:
      - MSA_SECURE=TLS
      - MSA_AUTH=On
     volumes:
-      - $LOCAL_FOLDER/webmail-data:/var/www/html/data
+      - webmail-data:/var/www/html/data
 
   fetchmail:
     build:
@@ -72,7 +72,7 @@ services:
     image: fetchmail
     env_file: .env
     volumes:
-     - $LOCAL_FOLDER/fetchmail-data:/etc/fetchmail
+     - fetchmail-data:/etc/fetchmail
 
   radicale:
     build:
@@ -82,8 +82,8 @@ services:
     ports:
      - "8091:80"
     volumes:
-     - $LOCAL_FOLDER/radicale-data:/var/lib/radicale
-     - $LOCAL_FOLDER/auth-data:/etc/auth/
+     - radicale-data:/var/lib/radicale
+     - auth-data:/etc/auth/
   
   clamav:
     build:
@@ -91,7 +91,7 @@ services:
       dockerfile: Dockerfile.clamav
     image: clamav
     volumes:
-     - $LOCAL_FOLDER/clamav-data/lib/:/var/lib/clamav
+     - clamav-data:/var/lib/clamav
   
   rspamd:
     build:
@@ -103,3 +103,13 @@ services:
 
   redis:
     image: redis:alpine
+
+volumes:
+  clamav-data:
+  radicale-data:
+  auth-data:
+  fetchmail-data:
+  webmail-data:
+  sieve-data:
+  dovecot-data:
+  haraka-data:

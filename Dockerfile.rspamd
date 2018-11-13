@@ -2,7 +2,8 @@ FROM alpine:edge
 
 RUN set -x \
   && apk update --purge \
-  && apk add --no-cache rspamd rspamd-controller
+  && apk add --no-cache rspamd rspamd-controller \
+  && mkdir /run/rspamd/ && chown rspamd /run/rspamd
 
 RUN  sed -i -e "s/type = \"file\"/type = \"console\"/" /etc/rspamd/rspamd.conf \
   && sed -i -e "s/localhost/*/" /etc/rspamd/worker-*.conf   \
