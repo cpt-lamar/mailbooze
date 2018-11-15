@@ -35,7 +35,9 @@ rspamd\n\
 mail_from.is_resolvable\n\
 rcpt_to.in_host_list\n\
 data.headers\n\
+bounce\n\
 karma\n\
+redis\n\
 queue/lmtp\n\
 " > config/plugins \
 \
@@ -46,6 +48,14 @@ queue/lmtp\n\
 host=\$MDA_HOST\n\
 port=\$MDA_PORT\n\
 enable_tls=false" > config/lmtp.ini.temp \
+\
+  && echo -e "\
+[check]\n\
+reject_all=true" > config/bounce.ini \
+\
+  && echo -e "\
+[server]\n\
+host=redis" > config/redis.ini \
 \
   && echo -e "\
 [inbound]\n\
@@ -93,10 +103,19 @@ daemonize=false\n\
 
 VOLUME /usr/local/share/GeoIP
 
+VOLUME /etc/auth
+
 EXPOSE 25
 
 CMD envsubst < /opt/haraka/config/host_list.temp > /opt/haraka/config/host_list \
   && envsubst < /opt/haraka/config/lmtp.ini.temp > /opt/haraka/config/lmtp.ini  \
-  &&  echo -e "$(dig -x $(dig $DOMAIN +short) +short)" > /opt/haraka/config/me \
+  && echo -e "$(dig -x $(dig $DOMAIN +short) +short)" > /opt/haraka/config/me \
+  && aliases={ \ 
+  && for u in $(cat /etc/auth/users); \
+    do \
+      user=${u%%:::}; \
+      aliases="$aliases\"$user\" : { \"action\" : \"alias\", \"to\" : \"$user\" },"; \
+    done \
+  && echo -e "${aliases%?}}" > config/aliases \ 
   && exec /usr/bin/haraka -c /opt/haraka/
 
