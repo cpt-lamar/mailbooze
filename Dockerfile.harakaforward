@@ -1,0 +1,74 @@
+FROM alpine:latest
+
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
+RUN apk update \
+  && apk add --no-cache nodejs nodejs-npm openssl gettext bind-tools \
+  && apk add --no-cache --virtual build-deps python make gcc g++ \
+  && npm config set strict-ssl false \
+  && npm install --unsafe -g Haraka \
+  && apk del build-deps \
+  && mkdir -p /opt/haraka/queue
+
+WORKDIR /opt/haraka
+
+ENV DOMAIN\
+  CLAMD_HOST
+
+RUN haraka --install . \
+\
+  && openssl req -x509 -nodes -days 2190 -newkey rsa:2048 \
+      -keyout config/tls_key.pem -out config/tls_cert.pem \
+      -subj "/C=AA/ST=A/L=A/O=A/OU=A/CN=A" \
+  && echo -e "\
+tls\n\
+dnsbl\n\
+helo.checks\n\
+clamd\n\
+rcpt_to.in_host_list\n\
+bounce\n\
+queue/smtp_forward\n\
+" > config/plugins \
+\
+  && echo -e "\$DOMAIN" > config/host_list.temp \
+\
+  && echo -e "\
+host=\$DOMAIN\n\
+enable_tls=true\n\
+max_connections=2" > config/smtp_forward.ini.temp \
+\
+  && echo -e "\
+[check]\n\
+reject_all=true" > config/bounce.ini \
+\
+  && echo -e "\
+[inbound]\n\
+ciphers=EECDH+AESGCM:EDH+aRSA+AESGCM:EECDH+AES256:EDH+aRSA+AES256:EECDH+AES128:EDH+aRSA+AES128:RSA+AES:RSA+3DES\n\
+rejectUnauthorized=true\n\
+requestCert=true\n\
+" > config/tls.ini \
+\
+  && echo -e "\
+clamd_socket=\$CLAMD_HOST:3310\n\
+" > config/clamd.ini.temp \
+\
+  && echo -e "\
+/opt/haraka/queue/" > config/queue_dir \
+\
+  && echo -e "\
+nodes=0\n\
+daemonize=false\n\
+" > config/smtp.ini \
+\
+  && cp /usr/lib/node_modules/Haraka/config/dnsbl.ini config
+
+VOLUME /opt/haraka/queue
+
+EXPOSE 25
+
+CMD  envsubst < config/host_list.temp  > config/host_list \
+  && envsubst < config/smtp_forward.ini.temp   > config/smtp_forward.ini \
+  && envsubst < config/clamd.ini.temp  > config/clamd.ini \
+  && echo -e "$(dig -x $(dig $DOMAIN +short) +short)" > /opt/haraka/config/me \
+  && exec /usr/bin/haraka -c /opt/haraka/
+
