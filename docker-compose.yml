@@ -10,10 +10,13 @@ services:
     environment:
      - MDA_HOST=dovecot
      - MDA_PORT=24
+     - CLAMD_HOST=clamav
+     - RSPAMD_HOST=rspamd
+     - REDIS_HOST=redis
     ports:
      - "25:25"
     volumes:
-     - haraka-data:/opt/haraka/queue
+     - /var/lib/haraka-queue:/opt/haraka/queue
      - auth-data:/etc/auth/
   
   dovecot:
@@ -113,4 +116,4 @@ volumes:
   webmail-data:
   sieve-data:
   dovecot-data:
-  haraka-data:
+  haraka-queue:
