@@ -15,7 +15,10 @@ WORKDIR /opt/haraka
 
 ENV DOMAIN\
   MDA_HOST\
-  MDA_PORT
+  MDA_PORT\
+  CLAMD_HOST\
+  RSPAMD_HOST\
+  REDIS_HOST
 
 RUN haraka --install . \
 \
@@ -25,19 +28,19 @@ RUN haraka --install . \
   && echo -e "\
 tls\n\
 dnsbl\n\
-geoip\n\
-fcrdns\n\
-data.uribl\n\
+#geoip\n\
+#fcrdns\n\
+#data.uribl\n\
 aliases\n\
 helo.checks\n\
 clamd\n\
 rspamd\n\
-mail_from.is_resolvable\n\
+#mail_from.is_resolvable\n\
 rcpt_to.in_host_list\n\
-data.headers\n\
+#data.headers\n\
 bounce\n\
-karma\n\
-redis\n\
+#karma\n\
+#redis\n\
 queue/lmtp\n\
 " > config/plugins \
 \
@@ -55,7 +58,7 @@ reject_all=true" > config/bounce.ini \
 \
   && echo -e "\
 [server]\n\
-host=redis" > config/redis.ini \
+host=\$REDIS_HOST" > config/redis.ini.temp \
 \
   && echo -e "\
 [inbound]\n\
@@ -65,8 +68,8 @@ requestCert=true\n\
 " > config/tls.ini \
 \
   && echo -e "\
-clamd_socket=clamav:3310\n\
-" > config/clamd.ini \
+clamd_socket=\$CLAMD_HOST:3310\n\
+" > config/clamd.ini.temp \
 \
   && echo -e "\
 reject_no_mx=0\n\
@@ -94,12 +97,12 @@ nodes=0\n\
 daemonize=false\n\
 " > config/smtp.ini \
 \
-  && cp /node_modules/haraka-plugin-karma/config/karma.ini config \
-  && sed -i -e "s/^\[redis\]/\[redis\]\nhost = redis\ndb = karma/" config/karma.ini \
+  && sed -e "s/^\[redis\]/\[redis\]\nhost = \$REDIS_HOST\ndb = karma/" \
+      /node_modules/haraka-plugin-karma/config/karma.ini > config/karma.ini.temp \
+  && sed -e "s/^;host =.*/host = \$RSPAMD_HOST/" \
+     /node_modules/haraka-plugin-rspamd/config/rspamd.ini > config/rspamd.ini.temp \
   && cp /usr/lib/node_modules/Haraka/config/data.uribl.ini config \
-  && cp /usr/lib/node_modules/Haraka/config/dnsbl.ini config \
-  && cp /node_modules/haraka-plugin-rspamd/config/rspamd.ini config \
-  && sed -i -e "s/^;host =.*/host = rspamd/" config/rspamd.ini
+  && cp /usr/lib/node_modules/Haraka/config/dnsbl.ini config
 
 VOLUME /usr/local/share/GeoIP
 
@@ -107,8 +110,12 @@ VOLUME /etc/auth
 
 EXPOSE 25
 
-CMD envsubst < /opt/haraka/config/host_list.temp > /opt/haraka/config/host_list \
-  && envsubst < /opt/haraka/config/lmtp.ini.temp > /opt/haraka/config/lmtp.ini  \
+CMD  envsubst < config/host_list.temp  > config/host_list \
+  && envsubst < config/lmtp.ini.temp   > config/lmtp.ini \
+  && envsubst < config/clamd.ini.temp  > config/clamd.ini \
+  && envsubst < config/rspamd.ini.temp > config/rspamd.ini \
+  && envsubst < config/redis.ini.temp  > config/redis.ini \
+  && envsubst < config/karma.ini.temp  > config/karma.ini \
   && echo -e "$(dig -x $(dig $DOMAIN +short) +short)" > /opt/haraka/config/me \
   && aliases={ \ 
   && for u in $(cat /etc/auth/users); \
