@@ -24,8 +24,8 @@ RUN haraka --install . \
 tls\n\
 dnsbl\n\
 helo.checks\n\
-clamd\n\
 rcpt_to.in_host_list\n\
+clamd\n\
 bounce\n\
 queue/smtp_forward\n\
 " > config/plugins \
@@ -33,7 +33,9 @@ queue/smtp_forward\n\
   && echo -e "\$DOMAIN" > config/host_list.temp \
 \
   && echo -e "\
-host=\$DOMAIN\n\
+enable_outbound=false\n\
+#host=\$DOMAIN\n\
+#port=25\n\
 enable_tls=true\n\
 max_connections=2" > config/smtp_forward.ini.temp \
 \
