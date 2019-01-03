@@ -24,20 +24,19 @@ RUN haraka --install . \
 tls\n\
 dnsbl\n\
 helo.checks\n\
-rcpt_to.in_host_list\n\
+relay\n\
 clamd\n\
 bounce\n\
-queue/smtp_forward\n\
 " > config/plugins \
 \
-  && echo -e "\$DOMAIN" > config/host_list.temp \
+  && echo -e "\
+[relay]\n\
+force_routing=false\n\
+dest_domains=true" > config/relay.ini \
 \
   && echo -e "\
-enable_outbound=false\n\
-#host=\$DOMAIN\n\
-#port=25\n\
-enable_tls=true\n\
-max_connections=2" > config/smtp_forward.ini.temp \
+[domains]\n\
+\$DOMAIN = { \"action\": \"accept\" }" > config/relay_dest_domains.ini.temp \
 \
   && echo -e "\
 [check]\n\
@@ -68,8 +67,7 @@ VOLUME /opt/haraka/queue
 
 EXPOSE 25
 
-CMD  envsubst < config/host_list.temp  > config/host_list \
-  && envsubst < config/smtp_forward.ini.temp   > config/smtp_forward.ini \
+CMD  envsubst < config/relay_dest_domains.ini.temp  > config/relay_dest_domains.ini \
   && envsubst < config/clamd.ini.temp  > config/clamd.ini \
   && echo -e "$(dig -x $(dig $DOMAIN +short) +short)" > /opt/haraka/config/me \
   && exec /usr/bin/haraka -c /opt/haraka/
