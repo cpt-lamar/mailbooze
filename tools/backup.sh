@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/sh -e
 
 usage ()
 {
@@ -42,7 +42,7 @@ function transfer
     SEND_CMD="sudo btrfs send $SNAPSHOT_FOLDER/$2"
   fi
 
-  $SEND_CMD | $SSH_CMD $REMOTE_HOST sudo btrfs receive $SNAPSHOT_FOLDER/
+  $SEND_CMD | pv -L 10M | $SSH_CMD $REMOTE_HOST sudo btrfs receive $SNAPSHOT_FOLDER/
   NB_SNAPSHOTS=$(( $NB_SNAPSHOTS +1 ))
 }
 
@@ -66,7 +66,7 @@ function transfer_snapshots
     echo "found ${LOCAL_LIST[$1]} on remote server"
     return 0
   else
-    if [ $1 -lt ${#LOCAL_LIST[@]} ]; then #recurse !
+    if [ $1 -lt $(( ${#LOCAL_LIST[@]} -1)) ]; then #recurse !
       transfer_snapshots $(( $1 + 1 ))
       BASE_SNAPSHOT=${LOCAL_LIST[$1 +1]}
     else
@@ -101,7 +101,6 @@ transfer_snapshots 0
 
 echo "$NB_SNAPSHOTS snapshots successfully sent to $REMOTE_HOST"
 
-
 #Starting cleanup...
 echo "Cleaning $SNAPSHOT_FOLDER/"
 
@@ -119,3 +118,5 @@ printf '%s\n' ${LOCAL_LIST[@]} | sort | grep "$LASTMONTH" | tail +2 | grep -v $E
 printf '%s\n' ${REMOTE_LIST[@]} | sort | grep "$LASTMONTH" | tail +2 | grep -v $EXCLUDE | xargs -r -n 1 sh -c "$SSH_CMD $REMOTE_HOST sudo btrfs sub del $SNAPSHOT_FOLDER/\$0"
 
 echo "Successully cleaned $SNAPSHOT_FOLDER/"
+
+
