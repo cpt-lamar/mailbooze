@@ -18,7 +18,8 @@ services:
     volumes:
      - /var/lib/haraka-queue:/opt/haraka/queue
      - auth-data:/etc/auth/
-  
+    restart: unless-stopped 
+
   dovecot:
     build:
       context: .
@@ -33,6 +34,7 @@ services:
      - dovecot-data:/mail/
      - auth-data:/etc/auth/
      - sieve-data:/users/
+    restart: unless-stopped 
 
   nginx:
     build:
@@ -49,6 +51,7 @@ services:
       - "8090:80"
     depends_on:
       - php
+    restart: unless-stopped 
 
   php:
     build:
@@ -68,6 +71,7 @@ services:
      - MSA_AUTH=On
     volumes:
       - webmail-data:/var/www/html/data
+    restart: unless-stopped 
 
   fetchmail:
     build:
@@ -88,6 +92,7 @@ services:
     volumes:
      - radicale-data:/var/lib/radicale
      - auth-data:/etc/auth/
+    restart: unless-stopped 
   
   clamav:
     build:
@@ -96,6 +101,7 @@ services:
     image: clamav
     volumes:
      - clamav-data:/var/lib/clamav
+    restart: unless-stopped 
   
   rspamd:
     build:
@@ -104,9 +110,11 @@ services:
     image: rspamd
     ports:
      - "11334:11334"
+    restart: unless-stopped 
 
   redis:
     image: redis:alpine
+    restart: unless-stopped 
 
 volumes:
   clamav-data:
