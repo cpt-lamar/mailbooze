@@ -31,12 +31,12 @@ bounce\n\
 \
   && echo -e "\
 [relay]\n\
-force_routing=false\n\
+force_routing=true\n\
 dest_domains=true" > config/relay.ini \
 \
   && echo -e "\
 [domains]\n\
-\$DOMAIN = { \"action\": \"accept\" }" > config/relay_dest_domains.ini.temp \
+\$DOMAIN = { \"action\": \"accept\", \"nexthop\": \"\$DOMAIN:25\" }" > config/relay_dest_domains.ini.temp \
 \
   && echo -e "\
 [check]\n\
