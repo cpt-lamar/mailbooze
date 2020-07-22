@@ -5,11 +5,11 @@ WORKDIR /var/www/html
 RUN set -x \
   && apk add --no-cache nginx gettext unzip curl \
   && curl http://www.rainloop.net/repository/webmail/rainloop-community-latest.zip -o rainloop.zip \
-  && unzip rainloop.zip \
+  && unzip -o rainloop.zip \
   && rm rainloop.zip \
-  && rm -r data/ \
+  #&& rm -rf data/ \
   && find . -regex '.*\.php' | grep -v index.php | xargs rm  \
-  && adduser -u 82 -D -S -G www-data www-data \
+  #&& adduser -u 82 -D -S -G www-data www-data \
   && find . -type d -exec chmod 755 {} \; \
   && find . -type f -exec chmod 644 {} \; \
   && chown -R www-data:www-data .
