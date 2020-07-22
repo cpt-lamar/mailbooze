@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM alpine:latest
 
 RUN apk update && apk upgrade --purge \
   && mkdir -p /etc/dovecot/certs \
