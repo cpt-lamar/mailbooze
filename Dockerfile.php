@@ -2,14 +2,11 @@ FROM alpine:latest
 
 WORKDIR /var/www/html
 
-#  && echo -e "http://dl-cdn.alpinelinux.org/alpine/latest-stable/main/\nhttp://dl-cdn.alpinelinux.org/alpine/latest-stable/community/" > /etc/apk/repositories \
 RUN set -x \
   && apk update \
   && apk add --no-cache unzip curl php7 php7-fpm php7-curl php7-iconv php7-json php7-xml php7-dom php7-openssl php7-zlib php7-opcache php7-gd php7-pdo_sqlite php7-simplexml gettext su-exec \
-  && addgroup -g 82 -S www-data \
-  && adduser -u 82 -D -S -G www-data www-data \
   && curl http://www.rainloop.net/repository/webmail/rainloop-community-latest.zip -o rainloop.zip \
-  && unzip rainloop.zip \
+  && unzip -o rainloop.zip \
   && rm rainloop.zip \
   && rm -r ./rainloop/v/*/static/ \
   && find . -type d -exec chmod 755 {} \; \
@@ -60,19 +57,18 @@ smtp_short_login = On\n\
 smtp_auth = \$MSA_AUTH\n\
 smtp_php_mail = Off" > /etc/domain.ini.temp
 
-
 VOLUME /var/www/html/data
 
 CMD  envsubst < /etc/php7/php-fpm.conf.temp > /etc/php7/php-fpm.conf \
   && chown www-data:www-data data \
   && su-exec www-data php7 index.php \
   && envsubst < /etc/domain.ini.temp > data/_data_/_default_/domains/$DOMAIN.ini \
-  && su-exec www-data sed -i -e "/^\[contacts\]/,/^\[.*\]/ s|^enable.*$|enable = On|" \
-            -e "/^\[debug\]/,/^\[.*\]/ s|^enable *=.*$|enable = Off|" \
-            -e "s/^mail_func_clear_headers.*/mail_func_clear_headers = On/" \
-            -e "s/^smtp_show_server_errors.*/smtp_show_server_errors = On/" \
-            -e "s/^type.*$/type = sqlite/" \
-            data/_data_/_default_/configs/application.ini \
+#  && su-exec www-data sed -i -e "/^\[contacts\]/,/^\[.*\]/ s|^enable.*$|enable = On|" \
+#            -e "/^\[debug\]/,/^\[.*\]/ s|^enable *=.*$|enable = Off|" \
+#            -e "s/^mail_func_clear_headers.*/mail_func_clear_headers = On/" \
+#            -e "s/^smtp_show_server_errors.*/smtp_show_server_errors = On/" \
+#            -e "s/^type.*$/type = sqlite/" \
+#            data/_data_/_default_/configs/application.ini \
   && sed -i -e "s/^upload_max_filesize.*/upload_max_filesize = 25M/" \
             -e "s/^post_max_size.*/post_max_size = 25M/" \
             /etc/php7/php.ini \
