@@ -42,12 +42,8 @@ function transfer
     SEND_CMD="sudo btrfs send $SNAPSHOT_FOLDER/$2"
   fi
 
-<<<<<<< HEAD
   #$SEND_CMD | pv -L 10M | $SSH_CMD $REMOTE_HOST sudo btrfs receive $SNAPSHOT_FOLDER/
   $SEND_CMD | $SSH_CMD $REMOTE_HOST sudo btrfs receive $SNAPSHOT_FOLDER/
-=======
-  $SEND_CMD | pv -L 10M | $SSH_CMD $REMOTE_HOST sudo btrfs receive $SNAPSHOT_FOLDER/
->>>>>>> 7e3a16a91b4fdfb1c4d44e5560d5016cabf3ad70
   NB_SNAPSHOTS=$(( $NB_SNAPSHOTS +1 ))
 }
 
