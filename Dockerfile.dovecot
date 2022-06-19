@@ -1,9 +1,10 @@
-FROM alpine:latest
+FROM alpine:3.16
 
 RUN apk update && apk upgrade --purge \
   && mkdir -p /etc/dovecot/certs \
   && echo "ssl = no" > /etc/dovecot/dovecot.conf \
-  && apk add --no-cache dovecot dovecot-pigeonhole-plugin dovecot-fts-lucene ca-certificates gettext rspamd-client \
+  && apk add --no-cache dovecot dovecot-pigeonhole-plugin dovecot-fts-xapian dovecot-submissiond dovecot-pop3d dovecot-lmtpd ca-certificates gettext rspamd-client poppler-utils curl unzip \
+  && apk add catdoc --update-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing/ --allow-untrusted \
   && adduser -D -G users -u 5000 vmail
 
 VOLUME ["/mail"]
@@ -43,14 +44,12 @@ RUN echo -e "#!/bin/sh\nexec /usr/bin/rspamc learn_spam -h rspamd" > /usr/lib/do
     && chmod +x /usr/lib/dovecot/sieve/learn-*.sh \
     && chown vmail:users /usr/lib/dovecot/sieve /usr/lib/dovecot/sieve/global
 
-
 RUN echo -e "\
 log_path=/dev/stderr\n\
 protocols = imap pop3 lmtp submission sieve\n\
 ssl = yes\n\
 ssl_cert = </etc/dovecot/certs/dovecot.pem\n\
 ssl_key = </etc/dovecot/certs/dovecot.key\n\
-ssl_min_protocol = TLSv1\n\
 ssl_dh = </etc/dovecot/certs/dh.pem\n\
 ssl_client_ca_dir = /etc/ssl/certs/\n\
 ssl_client_ca_file = /etc/ssl/certs/ca-certificates.crt\n\
@@ -58,12 +57,12 @@ postmaster_address = postmaster@\$DOMAIN\n\
 disable_plaintext_auth=no\n\
 auth_mechanisms = plain login\n\
 #mail_debug = yes\n\
-#auth_debug=yes\n\
+auth_verbose=yes\n\
 #verbose_ssl=yes\n\
 maildir_very_dirty_syncs = yes\n\
 mail_home = /users/%n\n\
 mail_location = maildir:/mail/%n\n\
-mail_plugins=fts fts_lucene\n\
+mail_plugins=fts fts_xapian\n\
 passdb {\n\
   args = scheme=BLF-CRYPT username_format=%n /etc/auth/passwords\n\
   driver = passwd-file\n\
@@ -106,13 +105,23 @@ plugin {\n\
    \n\
    sieve_global_extensions = +vnd.dovecot.pipe +vnd.dovecot.environment\n\
    \n\
-   fts = lucene\n\
-   fts_lucene = whitespace_chars=@. normalize no_snowball\n\
+   fts = xapian\n\
+   fts_xapian = partial=3 full=20\n\
    fts_autoindex=yes\n\
-   fts_autoindex_max_recent_msgs=80\n\
-   fts_autoindex_exclude = Junk\n\
-   fts_autoindex_exclude2 = Trash\n\
-   fts_index_timeout=90\n\
+   fts_autoindex_exclude = \Junk\n\
+   fts_autoindex_exclude2 = \Trash\n\
+   fts_decoder = decode2text\n\
+   fts_enforced = yes\n\
+}\n\
+service indexer-worker {\n\
+    vsz_limit = 500M # TODO make it a variable\n\
+}\n\
+service decode2text {\n\
+    executable = script /usr/libexec/dovecot/decode2text.sh\n\
+    user = dovecot\n\
+    unix_listener decode2text {\n\
+        mode = 0666\n\
+    }\n\
 }\n\
 submission_relay_host = \$MSA_HOST\n\
 submission_relay_port = \$MSA_PORT\n\
