@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM alpine:3.16
 
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
