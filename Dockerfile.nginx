@@ -1,17 +1,18 @@
-FROM alpine:latest
+FROM alpine:3.16
 
 WORKDIR /var/www/html
 
 RUN set -x \
   && apk add --no-cache nginx gettext unzip curl \
-  && curl http://www.rainloop.net/repository/webmail/rainloop-community-latest.zip -o rainloop.zip \
-  && unzip -o rainloop.zip \
-  && rm rainloop.zip \
+  && curl -L https://github.com/the-djmaze/snappymail/releases/download/v2.16.3/snappymail-2.16.3.zip -o snappymail.zip \
+  && unzip -o snappymail.zip \
+  && rm snappymail.zip \
   #&& rm -rf data/ \
   && find . -regex '.*\.php' | grep -v index.php | xargs rm  \
   #&& adduser -u 82 -D -S -G www-data www-data \
   && find . -type d -exec chmod 755 {} \; \
   && find . -type f -exec chmod 644 {} \; \
+  && adduser -u 82 -D -S -G www-data www-data \
   && chown -R www-data:www-data .
 
 ENV NGINX_PROCS\
