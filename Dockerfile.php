@@ -1,10 +1,10 @@
-FROM alpine:3.16
+FROM alpine:3.19
 
 WORKDIR /var/www/html
 
 RUN set -x \
   && apk update \
-  && apk add --no-cache unzip curl php8 php8-fpm php8-curl php8-iconv php8-json php8-xml php8-dom php8-openssl php8-zlib php8-opcache php8-gd php8-pdo_sqlite php8-simplexml php8-mbstring gettext su-exec \
+  && apk add --no-cache unzip curl php83 php83-fpm php83-curl php83-iconv php83-json php83-xml php83-dom php83-openssl php83-zlib php83-opcache php83-gd php83-pdo_sqlite php83-simplexml php83-mbstring php83-sodium gettext su-exec \
   && curl -L https://github.com/the-djmaze/snappymail/releases/download/v2.16.3/snappymail-2.16.3.zip -o snappymail.zip \
   && unzip -o snappymail.zip \
   && rm snappymail.zip \
@@ -39,7 +39,8 @@ user = www-data\n\
 access.log = /proc/self/fd/2\n\
 clear_env = no\n\
 catch_workers_output = yes\n\
-listen = [::]:9000\n" > /etc/php8/php-fpm.conf.temp
+listen = [::]:9000\n\
+" > /etc/php83/php-fpm.conf.temp
 
 RUN echo -e "\
 imap_host = \"\$MDA_HOST\"\n\
@@ -78,7 +79,7 @@ mail_func_clear_headers = On\
 
 VOLUME /var/www/html/data
 
-CMD  envsubst < /etc/php8/php-fpm.conf.temp > /etc/php8/php-fpm.conf \
+CMD  envsubst < /etc/php83/php-fpm.conf.temp > /etc/php83/php-fpm.conf \
   && chown -R www-data:www-data data \
   && mkdir -p data/_data_/_default_/configs/ data/_data_/_default_/domains/ \
   && { if ! ls  data/_data_/_default_/configs/application.ini 2>/dev/null; then envsubst < /etc/application.ini.temp > data/_data_/_default_/configs/application.ini; fi; } \
@@ -86,7 +87,8 @@ CMD  envsubst < /etc/php8/php-fpm.conf.temp > /etc/php8/php-fpm.conf \
   && envsubst < /etc/domain.ini.temp > data/_data_/_default_/domains/$DOMAIN.ini \
   && sed -i -e "s/^upload_max_filesize.*/upload_max_filesize = 25M/" \
             -e "s/^post_max_size.*/post_max_size = 25M/" \
-            /etc/php8/php.ini \
-  && exec php-fpm8
+            /etc/php83/php.ini \
+  && echo "extension = sodium" >> /etc/php83/php.ini \ 
+  && exec php-fpm83
 
 EXPOSE 9000

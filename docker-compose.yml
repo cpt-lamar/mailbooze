@@ -81,6 +81,7 @@ services:
     env_file: .env
     volumes:
      - fetchmail-data:/etc/fetchmail
+    restart: unless-stopped 
 
   radicale:
     build:
@@ -94,30 +95,30 @@ services:
      - auth-data:/etc/auth/
     restart: unless-stopped 
   
-  clamav:
-    build:
-      context: .
-      dockerfile: Dockerfile.clamav
-    image: clamav
-    volumes:
-     - clamav-data:/var/lib/clamav
-    restart: unless-stopped 
+#  clamav:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.clamav
+#    image: clamav
+#    volumes:
+#     - clamav-data:/var/lib/clamav
+#    restart: unless-stopped 
   
-  rspamd:
-    build:
-      context: .
-      dockerfile: Dockerfile.rspamd
-    image: rspamd
-    ports:
-     - "11334:11334"
-    restart: unless-stopped 
+#  rspamd:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.rspamd
+#    image: rspamd
+#    ports:
+#     - "11334:11334"
+#    restart: unless-stopped 
 
-  redis:
-    image: redis:alpine
-    restart: unless-stopped 
+#  redis:
+#    image: redis:alpine
+#    restart: unless-stopped 
 
 volumes:
-  clamav-data:
+#  clamav-data:
   radicale-data:
   auth-data:
   fetchmail-data:

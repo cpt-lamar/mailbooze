@@ -1,4 +1,4 @@
-FROM alpine:3.16
+FROM alpine:3.19
 
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
@@ -9,7 +9,7 @@ RUN apk update \
   && apk add --no-cache --virtual build-deps python3 make gcc g++ \
   && npm config set strict-ssl false \
   && npm install --unsafe -g Haraka \
-  && npm install maxmind haraka-plugin-fcrdns haraka-plugin-karma haraka-plugin-rspamd haraka-plugin-redis haraka-plugin-geoip \
+  && npm install maxmind haraka-plugin-fcrdns haraka-plugin-rspamd haraka-plugin-redis haraka-plugin-geoip \
   && apk del build-deps \
   && mkdir -p /opt/haraka/queue
 
@@ -83,7 +83,7 @@ city=true\n\
   && echo -e "\
 nodes=0\n\
 daemonize=false\n\
-" > config/smtp.ini
+" > config/smtp.ini \
 #  && sed -e "s/^;host =.*/host = \$RSPAMD_HOST/" \
 #     /node_modules/haraka-plugin-rspamd/config/rspamd.ini > config/rspamd.ini.temp \
 #  && cp /usr/lib/node_modules/Haraka/config/data.uribl.ini config \
@@ -97,9 +97,9 @@ EXPOSE 25
 
 CMD  envsubst < config/host_list.temp  > config/host_list \
   && envsubst < config/lmtp.ini.temp   > config/lmtp.ini \
-  && envsubst < config/clamd.ini.temp  > config/clamd.ini \
-#  && envsubst < config/rspamd.ini.temp > config/rspamd.ini \
-  && envsubst < config/redis.ini.temp  > config/redis.ini \
+  #&& envsubst < config/clamd.ini.temp  > config/clamd.ini \
+  #&& envsubst < config/rspamd.ini.temp > config/rspamd.ini \
+  #&& envsubst < config/redis.ini.temp  > config/redis.ini \
   && echo -e "$(dig -x $(dig $DOMAIN +short) +short)" > /opt/haraka/config/me \
   && aliases={ \ 
   && for u in $(cat /etc/auth/users); \

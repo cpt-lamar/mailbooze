@@ -1,4 +1,4 @@
-FROM alpine:3.16
+FROM alpine:3.19
 
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
@@ -25,7 +25,7 @@ tls\n\
 dnsbl\n\
 helo.checks\n\
 relay\n\
-clamd\n\
+#clamd\n\
 bounce\n\
 " > config/plugins \
 \
@@ -49,10 +49,10 @@ rejectUnauthorized=true\n\
 requestCert=true\n\
 " > config/tls.ini \
 \
-  && echo -e "\
-clamd_socket=\$CLAMD_HOST:3310\n\
-" > config/clamd.ini.temp \
-\
+#  && echo -e "\
+#clamd_socket=\$CLAMD_HOST:3310\n\
+#" > config/clamd.ini.temp \
+#\
   && echo -e "\
 /opt/haraka/queue/" > config/queue_dir \
 \
@@ -68,7 +68,7 @@ VOLUME /opt/haraka/queue
 EXPOSE 25
 
 CMD  envsubst < config/relay_dest_domains.ini.temp  > config/relay_dest_domains.ini \
-  && envsubst < config/clamd.ini.temp  > config/clamd.ini \
+#  && envsubst < config/clamd.ini.temp  > config/clamd.ini \
   && echo -e "$(dig -x $(dig $DOMAIN +short) +short)" > /opt/haraka/config/me \
   && exec /usr/bin/haraka -c /opt/haraka/
 
