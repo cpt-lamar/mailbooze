@@ -4,8 +4,8 @@ WORKDIR /var/www/html
 
 RUN set -x \
   && apk update \
-  && apk add --no-cache unzip curl php83 php83-fpm php83-curl php83-iconv php83-json php83-xml php83-dom php83-openssl php83-zlib php83-opcache php83-gd php83-pdo_sqlite php83-simplexml php83-mbstring php83-sodium gettext su-exec \
-  && curl -L https://github.com/the-djmaze/snappymail/releases/download/v2.16.3/snappymail-2.16.3.zip -o snappymail.zip \
+  && apk add --no-cache unzip curl php83 php83-fpm php83-curl php83-iconv php83-json php83-xml php83-dom php83-openssl php83-zlib php83-opcache php83-gd php83-pdo_sqlite php83-simplexml php83-mbstring php83-sodium php83-ctype php83-fileinfo gettext su-exec \
+  && curl -L https://github.com/the-djmaze/snappymail/releases/download/v2.33.0/snappymail-2.33.0.zip -o snappymail.zip \
   && unzip -o snappymail.zip \
   && rm snappymail.zip \
 #  && rm -r ./snappymail/v/*/static/ \
